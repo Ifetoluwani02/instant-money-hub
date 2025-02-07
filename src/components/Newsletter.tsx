@@ -26,20 +26,20 @@ const Newsletter = () => {
   };
 
   return (
-    <section className="py-16 bg-primary/5">
+    <section className="py-24 bg-gradient-to-br from-primary/5 to-secondary/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-secondary sm:text-4xl">
+        <div className="text-center max-w-3xl mx-auto">
+          <h2 className="text-3xl font-bold text-secondary sm:text-4xl mb-6">
             Stay Updated
           </h2>
-          <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto">
             Subscribe to our newsletter for the latest market insights and
             investment opportunities
           </p>
         </div>
         <form
           onSubmit={handleSubmit}
-          className="mt-8 max-w-md mx-auto flex flex-col sm:flex-row gap-4"
+          className="mt-12 max-w-md mx-auto flex flex-col sm:flex-row gap-4"
         >
           <div className="flex-1">
             <Input
@@ -48,13 +48,13 @@ const Newsletter = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full"
+              className="w-full h-12"
             />
           </div>
           <Button
             type="submit"
             disabled={loading}
-            className="w-full sm:w-auto"
+            className="w-full sm:w-auto h-12 bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-300"
           >
             {loading ? (
               "Subscribing..."

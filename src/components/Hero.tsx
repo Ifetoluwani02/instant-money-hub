@@ -20,7 +20,7 @@ const Hero = () => {
   };
 
   return (
-    <div className="relative bg-white pt-24 pb-16 sm:pt-32 lg:overflow-hidden">
+    <div className="relative bg-gradient-to-br from-white via-gray-50 to-gray-100 pt-24 pb-16 sm:pt-32 lg:overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="lg:grid lg:grid-cols-2 lg:gap-8">
           <div
@@ -30,17 +30,17 @@ const Hero = () => {
           >
             <div className="mt-10 lg:mt-0">
               <h1 className="text-4xl font-bold tracking-tight text-secondary sm:text-5xl lg:text-6xl">
-                <span className="block">Invest in Your</span>
-                <span className="block text-primary mt-2">Financial Future</span>
+                <span className="block mb-2">Invest in Your</span>
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80">Financial Future</span>
               </h1>
-              <p className="mt-6 text-lg sm:text-xl text-gray-500">
+              <p className="mt-6 text-lg sm:text-xl text-gray-600 leading-relaxed">
                 Access global markets with our comprehensive investment platform.
                 Trade cryptocurrencies, stocks, ETFs, and more with confidence.
               </p>
               <div className="mt-10 flex flex-col sm:flex-row gap-4">
                 <Button
                   size="lg"
-                  className="bg-primary hover:bg-primary/90 w-full sm:w-auto"
+                  className="bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-auto"
                   onClick={handleGetStarted}
                   disabled={loading}
                 >
@@ -56,7 +56,7 @@ const Hero = () => {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="w-full sm:w-auto"
+                  className="w-full sm:w-auto hover:bg-secondary/5 transition-all duration-300"
                   onClick={() => navigate("/about")}
                 >
                   Learn More
@@ -70,8 +70,8 @@ const Hero = () => {
             }`}
           >
             <div className="max-w-md mx-auto lg:max-w-none">
-              <div className="relative rounded-lg shadow-lg overflow-hidden">
-                <div className="relative bg-gray-50 h-[400px] sm:h-[500px] lg:h-[600px]">
+              <div className="relative rounded-2xl shadow-2xl overflow-hidden bg-white">
+                <div className="relative bg-gradient-to-br from-primary/5 to-secondary/5 h-[400px] sm:h-[500px] lg:h-[600px]">
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-secondary/10" />
                 </div>
               </div>

@@ -32,13 +32,13 @@ const Statistics = () => {
   ];
 
   return (
-    <section className="py-16 bg-white">
+    <section className="py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-12 md:grid-cols-4">
           {stats.map((stat, index) => (
             <div
               key={stat.label}
-              className={`flex flex-col items-center justify-center p-6 transition-all duration-700 delay-${
+              className={`flex flex-col items-center justify-center transition-all duration-700 delay-${
                 index * 100
               } ${
                 isVisible
@@ -46,11 +46,13 @@ const Statistics = () => {
                   : "opacity-0 translate-y-10"
               }`}
             >
-              <stat.icon className="w-8 h-8 text-primary mb-4" />
-              <div className="text-3xl font-bold text-secondary mb-2">
+              <div className="bg-primary/5 p-4 rounded-2xl mb-6">
+                <stat.icon className="w-8 h-8 text-primary" />
+              </div>
+              <div className="text-4xl font-bold text-secondary mb-2 bg-clip-text text-transparent bg-gradient-to-r from-secondary to-secondary/80">
                 {stat.value}
               </div>
-              <div className="text-gray-600 text-center">{stat.label}</div>
+              <div className="text-gray-600 text-center font-medium">{stat.label}</div>
             </div>
           ))}
         </div>
