@@ -1,17 +1,18 @@
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const navigate = useNavigate();
 
   const navItems = [
     { name: "Platform", href: "#platform" },
-    { name: "Customers", href: "#customers" },
-    { name: "Partners", href: "#partners" },
-    { name: "Insights", href: "#insights" },
+    { name: "About", href: "/about" },
+    { name: "Partners", href: "/partners" },
+    { name: "Insights", href: "/insights" },
   ];
 
   useEffect(() => {
@@ -22,8 +23,14 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleNavClick = () => {
+  const handleNavClick = (href: string) => {
     setIsOpen(false);
+    if (href.startsWith("#")) {
+      const element = document.querySelector(href);
+      element?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      navigate(href);
+    }
   };
 
   return (
@@ -43,19 +50,30 @@ const Navbar = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex md:items-center md:space-x-8">
             {navItems.map((item) => (
-              <a
+              <button
                 key={item.name}
-                href={item.href}
+                onClick={() => handleNavClick(item.href)}
                 className="text-gray-700 hover:text-primary transition-colors"
-                onClick={handleNavClick}
               >
                 {item.name}
-              </a>
+              </button>
             ))}
-            <Button variant="outline" className="ml-4">
+            <Button 
+              variant="outline" 
+              className="ml-4"
+              onClick={() => navigate("/auth")}
+            >
               Login
             </Button>
-            <Button className="bg-primary hover:bg-primary/90">Sign Up</Button>
+            <Button 
+              className="bg-primary hover:bg-primary/90"
+              onClick={() => {
+                navigate("/auth");
+                window.scrollTo(0, 0);
+              }}
+            >
+              Sign Up
+            </Button>
           </div>
 
           {/* Mobile menu button */}
@@ -77,18 +95,33 @@ const Navbar = () => {
       }`}>
         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white shadow-lg">
           {navItems.map((item) => (
-            <a
+            <button
               key={item.name}
-              href={item.href}
-              className="block px-3 py-2 text-gray-700 hover:text-primary transition-colors"
-              onClick={handleNavClick}
+              onClick={() => handleNavClick(item.href)}
+              className="block w-full text-left px-3 py-2 text-gray-700 hover:text-primary transition-colors"
             >
               {item.name}
-            </a>
+            </button>
           ))}
           <div className="flex flex-col space-y-2 px-3 pt-4">
-            <Button variant="outline">Login</Button>
-            <Button className="bg-primary hover:bg-primary/90">Sign Up</Button>
+            <Button 
+              variant="outline"
+              onClick={() => {
+                navigate("/auth");
+                setIsOpen(false);
+              }}
+            >
+              Login
+            </Button>
+            <Button 
+              className="bg-primary hover:bg-primary/90"
+              onClick={() => {
+                navigate("/auth");
+                setIsOpen(false);
+              }}
+            >
+              Sign Up
+            </Button>
           </div>
         </div>
       </div>
