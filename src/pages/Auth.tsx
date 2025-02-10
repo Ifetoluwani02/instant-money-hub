@@ -1,10 +1,11 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
+import { Link, useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -12,15 +13,19 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Here we'll just show a success message for now
+    // Here we'll just show a success message and redirect to dashboard
     toast({
       title: isLogin ? "Login Successful" : "Sign Up Successful",
       description: "Welcome to Instant Share Finance!",
     });
+
+    // Redirect to dashboard
+    navigate("/dashboard");
 
     // Clear form
     setEmail("");
