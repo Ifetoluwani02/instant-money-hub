@@ -1,7 +1,7 @@
 
 import { ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface SidebarProps {
   items: {
@@ -14,6 +14,14 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ items, onItemClick, isMobile = false, isOpen = true }: SidebarProps) => {
+  const navigate = useNavigate();
+
+  const handleItemClick = (label: string) => {
+    onItemClick(label);
+    const path = label.toLowerCase();
+    navigate(`/${path}`);
+  };
+
   return (
     <aside className={`fixed left-0 top-0 h-full w-64 bg-[#121214] border-r border-white/10 z-40 transition-transform duration-300 ease-in-out ${
       isMobile ? (isOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'
@@ -27,7 +35,7 @@ const Sidebar = ({ items, onItemClick, isMobile = false, isOpen = true }: Sideba
             <button
               key={item.label}
               className="flex items-center w-full px-4 py-3 text-sm text-gray-300 hover:bg-white/5 rounded-lg transition-colors"
-              onClick={() => onItemClick(item.label.toLowerCase())}
+              onClick={() => handleItemClick(item.label)}
             >
               {item.icon}
               {item.label}
