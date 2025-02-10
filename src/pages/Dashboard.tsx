@@ -17,6 +17,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
   Table,
   TableBody,
   TableCell,
@@ -53,9 +62,18 @@ const mockTransactions = [
   },
 ];
 
+const mockInvestmentPlans = [
+  { id: 1, name: "Starter", minAmount: 1000, roi: "10%" },
+  { id: 2, name: "Growth", minAmount: 5000, roi: "15%" },
+  { id: 3, name: "Premium", minAmount: 10000, roi: "20%" },
+];
+
 const Dashboard = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [selectedAction, setSelectedAction] = useState<string | null>(null);
+  const [amount, setAmount] = useState("");
+  const [selectedPlan, setSelectedPlan] = useState<number | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -64,10 +82,110 @@ const Dashboard = () => {
   }, []);
 
   const handleAction = (action: string) => {
-    toast({
-      title: "Action Triggered",
-      description: `${action} action will be implemented soon.`,
-    });
+    setSelectedAction(action);
+  };
+
+  const handleCloseDialog = () => {
+    setSelectedAction(null);
+    setAmount("");
+    setSelectedPlan(null);
+  };
+
+  const handleConfirmAction = () => {
+    switch (selectedAction) {
+      case "deposit":
+        if (!amount) {
+          toast({
+            title: "Error",
+            description: "Please enter an amount",
+            variant: "destructive",
+          });
+          return;
+        }
+        toast({
+          title: "Deposit Successful",
+          description: `$${amount} has been added to your account`,
+        });
+        break;
+
+      case "withdraw":
+        if (!amount) {
+          toast({
+            title: "Error",
+            description: "Please enter an amount",
+            variant: "destructive",
+          });
+          return;
+        }
+        if (Number(amount) > mockUser.balance) {
+          toast({
+            title: "Error",
+            description: "Insufficient funds",
+            variant: "destructive",
+          });
+          return;
+        }
+        toast({
+          title: "Withdrawal Request Submitted",
+          description: `Your withdrawal request for $${amount} is being processed`,
+        });
+        break;
+
+      case "plans":
+        if (!selectedPlan) {
+          toast({
+            title: "Error",
+            description: "Please select an investment plan",
+            variant: "destructive",
+          });
+          return;
+        }
+        const plan = mockInvestmentPlans.find(p => p.id === selectedPlan);
+        if (Number(amount) < (plan?.minAmount || 0)) {
+          toast({
+            title: "Error",
+            description: `Minimum investment for this plan is $${plan?.minAmount}`,
+            variant: "destructive",
+          });
+          return;
+        }
+        toast({
+          title: "Investment Successful",
+          description: `You have invested $${amount} in the ${plan?.name} plan`,
+        });
+        break;
+
+      case "manage-users":
+        // Admin action for managing users
+        toast({
+          title: "User Management",
+          description: "Opening user management dashboard...",
+        });
+        break;
+
+      case "approve-withdrawals":
+        // Admin action for approving withdrawals
+        toast({
+          title: "Pending Withdrawals",
+          description: "Loading withdrawal requests...",
+        });
+        break;
+
+      case "update-plans":
+        // Admin action for updating investment plans
+        toast({
+          title: "Investment Plans",
+          description: "Opening plan management interface...",
+        });
+        break;
+
+      default:
+        toast({
+          title: "Action Triggered",
+          description: `${selectedAction} action executed`,
+        });
+    }
+    handleCloseDialog();
   };
 
   return (
@@ -89,7 +207,7 @@ const Dashboard = () => {
               <button
                 key={item.label}
                 className="flex items-center w-full px-4 py-3 text-sm text-gray-300 hover:bg-white/5 rounded-lg transition-colors"
-                onClick={() => handleAction(item.label)}
+                onClick={() => handleAction(item.label.toLowerCase())}
               >
                 <item.icon className="w-5 h-5 mr-3" />
                 {item.label}
@@ -234,6 +352,74 @@ const Dashboard = () => {
         </div>
       </main>
 
+      {/* Action Dialogs */}
+      <Dialog open={!!selectedAction} onOpenChange={() => handleCloseDialog()}>
+        <DialogContent className="bg-[#121214] text-white border-white/10">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">
+              {selectedAction?.charAt(0).toUpperCase() + selectedAction?.slice(1)}
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              {selectedAction === "plans" 
+                ? "Choose an investment plan and enter the amount" 
+                : selectedAction === "deposit" || selectedAction === "withdraw" 
+                  ? "Enter the amount" 
+                  : "Complete the action below"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {(selectedAction === "deposit" || selectedAction === "withdraw" || selectedAction === "plans") && (
+              <div className="space-y-2">
+                <label htmlFor="amount" className="text-sm font-medium text-gray-200">
+                  Amount
+                </label>
+                <Input
+                  id="amount"
+                  type="number"
+                  min="0"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="Enter amount"
+                  className="bg-[#1A1A1C] border-white/10"
+                />
+              </div>
+            )}
+
+            {selectedAction === "plans" && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-200">
+                  Select Plan
+                </label>
+                <div className="grid gap-2">
+                  {mockInvestmentPlans.map((plan) => (
+                    <Button
+                      key={plan.id}
+                      variant={selectedPlan === plan.id ? "default" : "outline"}
+                      className="w-full justify-start"
+                      onClick={() => setSelectedPlan(plan.id)}
+                    >
+                      <span>{plan.name}</span>
+                      <span className="ml-auto">Min: ${plan.minAmount}</span>
+                      <span className="ml-2">ROI: {plan.roi}</span>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCloseDialog}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmAction}>
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Floating Chat Button */}
       <button
         onClick={() => setIsChatOpen(!isChatOpen)}
@@ -246,3 +432,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
