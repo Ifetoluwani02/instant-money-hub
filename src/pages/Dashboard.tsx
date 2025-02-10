@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -10,32 +11,18 @@ import {
   UserCircle,
   HelpCircle,
   MessageCircle,
-  ChevronRight,
   Bell,
   Menu,
   X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import StatCard from "@/components/dashboard/StatCard";
+import TransactionList from "@/components/dashboard/TransactionList";
+import Sidebar from "@/components/dashboard/Sidebar";
+import ActionDialog from "@/components/dashboard/ActionDialog";
 
 const mockUser = {
   isAdmin: true,
@@ -159,7 +146,6 @@ const Dashboard = () => {
         break;
 
       case "manage-users":
-        // Admin action for managing users
         toast({
           title: "User Management",
           description: "Opening user management dashboard...",
@@ -167,7 +153,6 @@ const Dashboard = () => {
         break;
 
       case "approve-withdrawals":
-        // Admin action for approving withdrawals
         toast({
           title: "Pending Withdrawals",
           description: "Loading withdrawal requests...",
@@ -175,7 +160,6 @@ const Dashboard = () => {
         break;
 
       case "update-plans":
-        // Admin action for updating investment plans
         toast({
           title: "Investment Plans",
           description: "Opening plan management interface...",
@@ -190,6 +174,26 @@ const Dashboard = () => {
     }
     handleCloseDialog();
   };
+
+  const sidebarItems = [
+    { icon: <LayoutDashboard className="w-5 h-5 mr-3" />, label: "Dashboard" },
+    { icon: <Wallet className="w-5 h-5 mr-3" />, label: "Wallet" },
+    { icon: <History className="w-5 h-5 mr-3" />, label: "History" },
+    { icon: <UserCircle className="w-5 h-5 mr-3" />, label: "Profile" },
+    { icon: <HelpCircle className="w-5 h-5 mr-3" />, label: "Support" },
+  ];
+
+  const stats = mockUser.isAdmin ? [
+    { label: "Total Balance", value: "$2.5M", icon: Wallet, up: true },
+    { label: "Total Users", value: "50K+", icon: Users, up: true },
+    { label: "Monthly Growth", value: "+15%", icon: ArrowUpRight, up: true },
+    { label: "Pending Withdrawals", value: "25", icon: ArrowDownRight, up: false },
+  ] : [
+    { label: "Account Balance", value: `$${mockUser.balance.toLocaleString()}`, icon: Wallet, up: true },
+    { label: "Total Earnings", value: `$${mockUser.earnings.toLocaleString()}`, icon: ArrowUpRight, up: true },
+    { label: "Total Deposits", value: `$${mockUser.deposits.toLocaleString()}`, icon: ArrowUpRight, up: true },
+    { label: "Total Withdrawals", value: `$${mockUser.withdrawals.toLocaleString()}`, icon: ArrowDownRight, up: false },
+  ];
 
   return (
     <div className="min-h-screen bg-[#0A0A0B] relative">
@@ -215,37 +219,15 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <aside className={`fixed left-0 top-0 h-full w-64 bg-[#121214] border-r border-white/10 z-40 transition-transform duration-300 ease-in-out ${
-        isMobile ? (isSidebarOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'
-      }`}>
-        <div className="p-6 pt-20 lg:pt-6">
-          <h2 className="text-xl font-bold text-white mb-8 hidden lg:block">
-            Financial Dashboard
-          </h2>
-          <nav className="space-y-1">
-            {[
-              { icon: LayoutDashboard, label: "Dashboard" },
-              { icon: Wallet, label: "Wallet" },
-              { icon: History, label: "History" },
-              { icon: UserCircle, label: "Profile" },
-              { icon: HelpCircle, label: "Support" },
-            ].map((item) => (
-              <button
-                key={item.label}
-                className="flex items-center w-full px-4 py-3 text-sm text-gray-300 hover:bg-white/5 rounded-lg transition-colors"
-                onClick={() => {
-                  handleAction(item.label.toLowerCase());
-                  if (isMobile) setIsSidebarOpen(false);
-                }}
-              >
-                <item.icon className="w-5 h-5 mr-3" />
-                {item.label}
-                <ChevronRight className="w-4 h-4 ml-auto" />
-              </button>
-            ))}
-          </nav>
-        </div>
-      </aside>
+      <Sidebar
+        items={sidebarItems}
+        onItemClick={(label) => {
+          handleAction(label);
+          if (isMobile) setIsSidebarOpen(false);
+        }}
+        isMobile={isMobile}
+        isOpen={isSidebarOpen}
+      />
 
       <main className={`transition-all duration-300 ${isMobile ? 'pl-0' : 'pl-64'}`}>
         <header className="hidden lg:block bg-[#121214] border-b border-white/10 p-6">
@@ -267,92 +249,24 @@ const Dashboard = () => {
 
         <div className="p-4 lg:p-6 space-y-6 mt-16 lg:mt-0">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-            {(mockUser.isAdmin ? [
-              { label: "Total Balance", value: "$2.5M", icon: Wallet, up: true },
-              { label: "Total Users", value: "50K+", icon: Users, up: true },
-              { label: "Monthly Growth", value: "+15%", icon: ArrowUpRight, up: true },
-              { label: "Pending Withdrawals", value: "25", icon: ArrowDownRight, up: false },
-            ] : [
-              { label: "Account Balance", value: `$${mockUser.balance.toLocaleString()}`, icon: Wallet, up: true },
-              { label: "Total Earnings", value: `$${mockUser.earnings.toLocaleString()}`, icon: ArrowUpRight, up: true },
-              { label: "Total Deposits", value: `$${mockUser.deposits.toLocaleString()}`, icon: ArrowUpRight, up: true },
-              { label: "Total Withdrawals", value: `$${mockUser.withdrawals.toLocaleString()}`, icon: ArrowDownRight, up: false },
-            ]).map((stat, index) => (
-              <Card
+            {stats.map((stat, index) => (
+              <StatCard
                 key={stat.label}
-                className={`p-4 lg:p-6 bg-[#121214] border-white/10 transition-all duration-500 ${
-                  isVisible
-                    ? "opacity-100 translate-y-0"
-                    : "opacity-0 translate-y-4"
-                }`}
-                style={{ transitionDelay: `${index * 100}ms` }}
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-sm text-gray-400">{stat.label}</p>
-                    <h3 className="text-xl lg:text-2xl font-bold text-white mt-1">
-                      {stat.value}
-                    </h3>
-                  </div>
-                  <div className={`p-2 rounded-lg ${
-                    stat.up ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
-                  }`}>
-                    <stat.icon className="w-5 h-5" />
-                  </div>
-                </div>
-              </Card>
+                label={stat.label}
+                value={stat.value}
+                icon={stat.icon}
+                up={stat.up}
+                delay={index * 100}
+                isVisible={isVisible}
+              />
             ))}
           </div>
 
           <Card className="p-4 lg:p-6 bg-[#121214] border-white/10 overflow-x-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg lg:text-xl font-bold text-white">Recent Transactions</h2>
-              <Button
-                variant="outline"
-                onClick={() => handleAction("view all")}
-                className="text-sm"
-              >
-                View All
-              </Button>
-            </div>
-            <div className="min-w-[600px]">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-white/10">
-                    <TableHead className="text-gray-400">Type</TableHead>
-                    <TableHead className="text-gray-400">Amount</TableHead>
-                    <TableHead className="text-gray-400">Status</TableHead>
-                    <TableHead className="text-gray-400">Date</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {mockTransactions.map((tx) => (
-                    <TableRow key={tx.id} className="border-white/10">
-                      <TableCell className="text-white">
-                        {tx.type.charAt(0).toUpperCase() + tx.type.slice(1)}
-                      </TableCell>
-                      <TableCell className="text-white">
-                        ${tx.amount.toLocaleString()}
-                      </TableCell>
-                      <TableCell>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs ${
-                            tx.status === "completed"
-                              ? "bg-green-500/10 text-green-500"
-                              : "bg-yellow-500/10 text-yellow-500"
-                          }`}
-                        >
-                          {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-white">
-                        {new Date(tx.date).toLocaleDateString()}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <TransactionList
+              transactions={mockTransactions}
+              onViewAll={() => handleAction("view all")}
+            />
           </Card>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
@@ -377,72 +291,17 @@ const Dashboard = () => {
         </div>
       </main>
 
-      <Dialog open={!!selectedAction} onOpenChange={() => handleCloseDialog()}>
-        <DialogContent className="bg-[#121214] text-white border-white/10 w-[90vw] max-w-md mx-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold">
-              {selectedAction?.charAt(0).toUpperCase() + selectedAction?.slice(1)}
-            </DialogTitle>
-            <DialogDescription className="text-gray-400">
-              {selectedAction === "plans" 
-                ? "Choose an investment plan and enter the amount" 
-                : selectedAction === "deposit" || selectedAction === "withdraw" 
-                  ? "Enter the amount" 
-                  : "Complete the action below"}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            {(selectedAction === "deposit" || selectedAction === "withdraw" || selectedAction === "plans") && (
-              <div className="space-y-2">
-                <label htmlFor="amount" className="text-sm font-medium text-gray-200">
-                  Amount
-                </label>
-                <Input
-                  id="amount"
-                  type="number"
-                  min="0"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="Enter amount"
-                  className="bg-[#1A1A1C] border-white/10"
-                />
-              </div>
-            )}
-
-            {selectedAction === "plans" && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-200">
-                  Select Plan
-                </label>
-                <div className="grid gap-2">
-                  {mockInvestmentPlans.map((plan) => (
-                    <Button
-                      key={plan.id}
-                      variant={selectedPlan === plan.id ? "default" : "outline"}
-                      className="w-full justify-start"
-                      onClick={() => setSelectedPlan(plan.id)}
-                    >
-                      <span>{plan.name}</span>
-                      <span className="ml-auto">Min: ${plan.minAmount}</span>
-                      <span className="ml-2">ROI: {plan.roi}</span>
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={handleCloseDialog}>
-              Cancel
-            </Button>
-            <Button onClick={handleConfirmAction}>
-              Confirm
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ActionDialog
+        isOpen={!!selectedAction}
+        action={selectedAction}
+        amount={amount}
+        selectedPlan={selectedPlan}
+        plans={mockInvestmentPlans}
+        onClose={handleCloseDialog}
+        onConfirm={handleConfirmAction}
+        onAmountChange={setAmount}
+        onPlanSelect={setSelectedPlan}
+      />
 
       <button
         onClick={() => setIsChatOpen(!isChatOpen)}
