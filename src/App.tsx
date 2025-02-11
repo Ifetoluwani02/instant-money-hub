@@ -10,6 +10,7 @@ import Insights from "./pages/Insights";
 import Partners from "./pages/Partners";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import Users from "./pages/Users";
 import Wallet from "./pages/Wallet";
 import History from "./pages/History";
 import Profile from "./pages/Profile";
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/partners" element={<Partners />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/users" element={<Users />} />
           <Route path="/wallet" element={<Wallet />} />
           <Route path="/history" element={<History />} />
           <Route path="/profile" element={<Profile />} />

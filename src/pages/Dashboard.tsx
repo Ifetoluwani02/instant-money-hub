@@ -72,6 +72,10 @@ const Dashboard = () => {
   }, []);
 
   const handleAction = (action: string) => {
+    if (action === "manage-users") {
+      navigate("/users");
+      return;
+    }
     setSelectedAction(action);
   };
 
