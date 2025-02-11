@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -23,6 +22,7 @@ import StatCard from "@/components/dashboard/StatCard";
 import TransactionList from "@/components/dashboard/TransactionList";
 import Sidebar from "@/components/dashboard/Sidebar";
 import ActionDialog from "@/components/dashboard/ActionDialog";
+import { useAuth } from "@/hooks/use-auth";
 
 const mockUser = {
   isAdmin: true,
@@ -66,6 +66,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const { user } = useAuth();
 
   useEffect(() => {
     setIsVisible(true);
@@ -187,7 +188,7 @@ const Dashboard = () => {
     { icon: <HelpCircle className="w-5 h-5 mr-3" />, label: "Support" },
   ];
 
-  const stats = mockUser.isAdmin ? [
+  const stats = user?.isAdmin ? [
     { label: "Total Balance", value: "$2.5M", icon: Wallet, up: true },
     { label: "Total Users", value: "50K+", icon: Users, up: true },
     { label: "Monthly Growth", value: "+15%", icon: ArrowUpRight, up: true },
@@ -197,6 +198,16 @@ const Dashboard = () => {
     { label: "Total Earnings", value: `$${mockUser.earnings.toLocaleString()}`, icon: ArrowUpRight, up: true },
     { label: "Total Deposits", value: `$${mockUser.deposits.toLocaleString()}`, icon: ArrowUpRight, up: true },
     { label: "Total Withdrawals", value: `$${mockUser.withdrawals.toLocaleString()}`, icon: ArrowDownRight, up: false },
+  ];
+
+  const actionButtons = user?.isAdmin ? [
+    { label: "Manage Users", action: "manage-users" },
+    { label: "Approve Withdrawals", action: "approve-withdrawals" },
+    { label: "Update Plans", action: "update-plans" },
+  ] : [
+    { label: "Deposit Funds", action: "deposit" },
+    { label: "Withdraw", action: "withdraw" },
+    { label: "Investment Plans", action: "plans" },
   ];
 
   return (
@@ -274,15 +285,7 @@ const Dashboard = () => {
           </Card>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-            {(mockUser.isAdmin ? [
-              { label: "Manage Users", action: "manage-users" },
-              { label: "Approve Withdrawals", action: "approve-withdrawals" },
-              { label: "Update Plans", action: "update-plans" },
-            ] : [
-              { label: "Deposit Funds", action: "deposit" },
-              { label: "Withdraw", action: "withdraw" },
-              { label: "Investment Plans", action: "plans" },
-            ]).map((action) => (
+            {actionButtons.map((action) => (
               <Button
                 key={action.label}
                 className="bg-[#121214] border border-white/10 hover:bg-white/5"

@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -14,18 +15,25 @@ const Auth = () => {
   const [name, setName] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Here we'll just show a success message and redirect to dashboard
-    toast({
-      title: isLogin ? "Login Successful" : "Sign Up Successful",
-      description: "Welcome to Instant Share Finance!",
-    });
-
-    // Redirect to dashboard
-    navigate("/dashboard");
+    if (isLogin) {
+      login(email, password);
+      toast({
+        title: "Login Successful",
+        description: "Welcome to Instant Share Finance!",
+      });
+      navigate("/dashboard");
+    } else {
+      toast({
+        title: "Sign Up not available",
+        description: "Please use the login option",
+        variant: "destructive",
+      });
+    }
 
     // Clear form
     setEmail("");
