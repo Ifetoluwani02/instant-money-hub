@@ -30,35 +30,8 @@ interface User {
   balance: number;
 }
 
-const mockUsers: User[] = [
-  {
-    id: 1,
-    name: "John Doe",
-    email: "john@example.com",
-    status: "active",
-    joinDate: "2024-01-15",
-    balance: 25000,
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    email: "jane@example.com",
-    status: "pending",
-    joinDate: "2024-02-01",
-    balance: 10000,
-  },
-  {
-    id: 3,
-    name: "Mike Johnson",
-    email: "mike@example.com",
-    status: "suspended",
-    joinDate: "2024-01-20",
-    balance: 5000,
-  },
-];
-
 const Users = () => {
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
@@ -100,7 +73,7 @@ const Users = () => {
       return;
     }
 
-    const newUserId = Math.max(...users.map(u => u.id)) + 1;
+    const newUserId = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;
     const userToAdd: User = {
       id: newUserId,
       name: newUser.name,
@@ -167,44 +140,52 @@ const Users = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredUsers.map((user) => (
-                <TableRow key={user.id} className="border-white/10">
-                  <TableCell className="text-white">{user.name}</TableCell>
-                  <TableCell className="text-white">{user.email}</TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(user.status)}`}>
-                      {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-white">
-                    {new Date(user.joinDate).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell className="text-white">
-                    ${user.balance.toLocaleString()}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleStatusChange(
-                          user.id,
-                          user.status === "active" ? "suspended" : "active"
-                        )}
-                      >
-                        <UserCog className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        onClick={() => handleDeleteUser(user.id)}
-                      >
-                        <UserMinus className="w-4 h-4" />
-                      </Button>
-                    </div>
+              {filteredUsers.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-gray-400 py-8">
+                    No users found. Add a new user to get started.
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                filteredUsers.map((user) => (
+                  <TableRow key={user.id} className="border-white/10">
+                    <TableCell className="text-white">{user.name}</TableCell>
+                    <TableCell className="text-white">{user.email}</TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(user.status)}`}>
+                        {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-white">
+                      {new Date(user.joinDate).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="text-white">
+                      ${user.balance.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleStatusChange(
+                            user.id,
+                            user.status === "active" ? "suspended" : "active"
+                          )}
+                        >
+                          <UserCog className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          onClick={() => handleDeleteUser(user.id)}
+                        >
+                          <UserMinus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>
