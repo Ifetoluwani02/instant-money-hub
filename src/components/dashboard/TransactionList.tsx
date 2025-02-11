@@ -20,20 +20,23 @@ interface Transaction {
 interface TransactionListProps {
   transactions: Transaction[];
   onViewAll: () => void;
+  showViewAll?: boolean;
 }
 
-const TransactionList = ({ transactions, onViewAll }: TransactionListProps) => {
+const TransactionList = ({ transactions, onViewAll, showViewAll = true }: TransactionListProps) => {
   return (
     <div className="min-w-[600px]">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-lg lg:text-xl font-bold text-white">Recent Transactions</h2>
-        <Button
-          variant="outline"
-          onClick={onViewAll}
-          className="text-sm"
-        >
-          View All
-        </Button>
+        {showViewAll && (
+          <Button
+            variant="outline"
+            onClick={onViewAll}
+            className="text-sm"
+          >
+            View All
+          </Button>
+        )}
       </div>
       <Table>
         <TableHeader>
