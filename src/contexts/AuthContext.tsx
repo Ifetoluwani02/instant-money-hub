@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   ];
 
   const login = (email: string, password: string) => {
-    const foundUser = mockUsers.find(u => u.email === email);
+    const foundUser = mockUsers.find(u => u.email === email && u.password === password);
     if (foundUser) {
       const { password: _, ...userWithoutPassword } = foundUser;
       setUser(userWithoutPassword);
