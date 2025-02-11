@@ -22,7 +22,7 @@ import StatCard from "@/components/dashboard/StatCard";
 import TransactionList from "@/components/dashboard/TransactionList";
 import Sidebar from "@/components/dashboard/Sidebar";
 import ActionDialog from "@/components/dashboard/ActionDialog";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/contexts/AuthContext";
 
 const mockUser = {
   isAdmin: true,
