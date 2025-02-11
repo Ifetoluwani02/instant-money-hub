@@ -1,11 +1,12 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { UserCircle, Mail, Shield, CheckCircle2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -25,10 +26,11 @@ const Profile = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-  if (!user) {
-    navigate("/auth");
-    return null;
-  }
+  useEffect(() => {
+    if (!user) {
+      navigate("/auth");
+    }
+  }, [user, navigate]);
 
   const handleLogout = () => {
     logout();
@@ -40,6 +42,7 @@ const Profile = () => {
   };
 
   const handleEditProfile = () => {
+    if (!user) return;
     setEditForm({
       name: user.name,
       email: user.email,
@@ -48,7 +51,15 @@ const Profile = () => {
   };
 
   const handleSaveProfile = () => {
-    // In a real application, this would make an API call to update the user's profile
+    if (!editForm.name || !editForm.email) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
     toast({
       title: "Profile Updated",
       description: "Your profile has been successfully updated",
@@ -56,44 +67,78 @@ const Profile = () => {
     setIsEditDialogOpen(false);
   };
 
+  if (!user) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-[#0A0A0B] p-4 lg:p-6">
-      <h1 className="text-2xl font-bold text-white mb-6">Profile</h1>
-      
-      <Card className="p-6 bg-[#121214] border-white/10 mb-6">
-        <div className="space-y-4">
-          <div>
-            <h2 className="text-sm text-gray-400">Name</h2>
-            <p className="text-white font-semibold">{user.name}</p>
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-2xl font-bold text-white mb-6">Profile</h1>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-1">
+            <Card className="p-6 bg-[#121214] border-white/10">
+              <div className="flex flex-col items-center">
+                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-4">
+                  <UserCircle className="w-16 h-16 text-primary" />
+                </div>
+                <h2 className="text-lg font-semibold text-white mb-2">{user.name}</h2>
+                <p className="text-sm text-gray-400">{user.isAdmin ? "Administrator" : "User"}</p>
+              </div>
+            </Card>
           </div>
-          <div>
-            <h2 className="text-sm text-gray-400">Email</h2>
-            <p className="text-white font-semibold">{user.email}</p>
-          </div>
-          <div>
-            <h2 className="text-sm text-gray-400">Role</h2>
-            <p className="text-white font-semibold">{user.isAdmin ? "Administrator" : "User"}</p>
-          </div>
-          <div>
-            <h2 className="text-sm text-gray-400">Account Status</h2>
-            <p className="text-white font-semibold">Active</p>
+
+          <div className="md:col-span-2">
+            <Card className="p-6 bg-[#121214] border-white/10 mb-6">
+              <div className="space-y-6">
+                <div className="flex items-center space-x-4">
+                  <UserCircle className="w-5 h-5 text-primary" />
+                  <div>
+                    <h2 className="text-sm text-gray-400">Name</h2>
+                    <p className="text-white font-semibold">{user.name}</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <Mail className="w-5 h-5 text-primary" />
+                  <div>
+                    <h2 className="text-sm text-gray-400">Email</h2>
+                    <p className="text-white font-semibold">{user.email}</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <Shield className="w-5 h-5 text-primary" />
+                  <div>
+                    <h2 className="text-sm text-gray-400">Role</h2>
+                    <p className="text-white font-semibold">{user.isAdmin ? "Administrator" : "User"}</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  <div>
+                    <h2 className="text-sm text-gray-400">Account Status</h2>
+                    <p className="text-white font-semibold">Active</p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Button
+                className="bg-[#121214] border border-white/10 hover:bg-white/5"
+                onClick={handleEditProfile}
+              >
+                Edit Profile
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleLogout}
+              >
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
-      </Card>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Button
-          className="bg-[#121214] border border-white/10 hover:bg-white/5"
-          onClick={handleEditProfile}
-        >
-          Edit Profile
-        </Button>
-        <Button
-          variant="destructive"
-          onClick={handleLogout}
-        >
-          Logout
-        </Button>
       </div>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
