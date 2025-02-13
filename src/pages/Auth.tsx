@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,18 +15,21 @@ const Auth = () => {
   const [name, setName] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, user } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    // If user is already logged in, redirect to dashboard
+    if (user) {
+      navigate("/dashboard");
+    }
+  }, [user, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (isLogin) {
       login(email, password);
-      toast({
-        title: "Login Successful",
-        description: "Welcome to Instant Share Finance!",
-      });
-      navigate("/dashboard");
+      // The navigation will be handled by the useEffect above when user state changes
     } else {
       toast({
         title: "Sign Up not available",
