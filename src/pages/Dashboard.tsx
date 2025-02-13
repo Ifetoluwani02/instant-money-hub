@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -24,38 +25,6 @@ import Sidebar from "@/components/dashboard/Sidebar";
 import ActionDialog from "@/components/dashboard/ActionDialog";
 import { useAuth } from "@/contexts/AuthContext";
 
-const mockUser = {
-  isAdmin: true,
-  name: "John Doe",
-  balance: 250000,
-  earnings: 15000,
-  deposits: 100000,
-  withdrawals: 5000,
-};
-
-const mockTransactions = [
-  {
-    id: 1,
-    type: "deposit",
-    amount: 5000,
-    status: "completed",
-    date: "2024-02-20",
-  },
-  {
-    id: 2,
-    type: "withdrawal",
-    amount: 2000,
-    status: "pending",
-    date: "2024-02-19",
-  },
-];
-
-const mockInvestmentPlans = [
-  { id: 1, name: "Starter", minAmount: 1000, roi: "10%" },
-  { id: 2, name: "Growth", minAmount: 5000, roi: "15%" },
-  { id: 3, name: "Premium", minAmount: 10000, roi: "20%" },
-];
-
 const Dashboard = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -63,6 +32,7 @@ const Dashboard = () => {
   const [amount, setAmount] = useState("");
   const [selectedPlan, setSelectedPlan] = useState<number | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [transactions, setTransactions] = useState([]);
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -70,10 +40,13 @@ const Dashboard = () => {
 
   useEffect(() => {
     setIsVisible(true);
-  }, []);
+    if (!user) {
+      navigate("/auth");
+    }
+  }, [user, navigate]);
 
   const handleAction = (action: string) => {
-    if (action === "manage-users") {
+    if (action === "manage-users" && user?.isAdmin) {
       navigate("/users");
       return;
     }
@@ -87,96 +60,20 @@ const Dashboard = () => {
   };
 
   const handleConfirmAction = () => {
-    switch (selectedAction) {
-      case "deposit":
-        if (!amount) {
-          toast({
-            title: "Error",
-            description: "Please enter an amount",
-            variant: "destructive",
-          });
-          return;
-        }
-        toast({
-          title: "Deposit Successful",
-          description: `$${amount} has been added to your account`,
-        });
-        break;
-
-      case "withdraw":
-        if (!amount) {
-          toast({
-            title: "Error",
-            description: "Please enter an amount",
-            variant: "destructive",
-          });
-          return;
-        }
-        if (Number(amount) > mockUser.balance) {
-          toast({
-            title: "Error",
-            description: "Insufficient funds",
-            variant: "destructive",
-          });
-          return;
-        }
-        toast({
-          title: "Withdrawal Request Submitted",
-          description: `Your withdrawal request for $${amount} is being processed`,
-        });
-        break;
-
-      case "plans":
-        if (!selectedPlan) {
-          toast({
-            title: "Error",
-            description: "Please select an investment plan",
-            variant: "destructive",
-          });
-          return;
-        }
-        const plan = mockInvestmentPlans.find(p => p.id === selectedPlan);
-        if (Number(amount) < (plan?.minAmount || 0)) {
-          toast({
-            title: "Error",
-            description: `Minimum investment for this plan is $${plan?.minAmount}`,
-            variant: "destructive",
-          });
-          return;
-        }
-        toast({
-          title: "Investment Successful",
-          description: `You have invested $${amount} in the ${plan?.name} plan`,
-        });
-        break;
-
-      case "manage-users":
-        toast({
-          title: "User Management",
-          description: "Opening user management dashboard...",
-        });
-        break;
-
-      case "approve-withdrawals":
-        toast({
-          title: "Pending Withdrawals",
-          description: "Loading withdrawal requests...",
-        });
-        break;
-
-      case "update-plans":
-        toast({
-          title: "Investment Plans",
-          description: "Opening plan management interface...",
-        });
-        break;
-
-      default:
-        toast({
-          title: "Action Triggered",
-          description: `${selectedAction} action executed`,
-        });
+    if (!amount && ["deposit", "withdraw", "plans"].includes(selectedAction || "")) {
+      toast({
+        title: "Error",
+        description: "Please enter an amount",
+        variant: "destructive",
+      });
+      return;
     }
+
+    toast({
+      title: "Action Submitted",
+      description: "Your request has been submitted and is being processed",
+    });
+    
     handleCloseDialog();
   };
 
@@ -189,15 +86,15 @@ const Dashboard = () => {
   ];
 
   const stats = user?.isAdmin ? [
-    { label: "Total Balance", value: "$2.5M", icon: Wallet, up: true },
-    { label: "Total Users", value: "50K+", icon: Users, up: true },
-    { label: "Monthly Growth", value: "+15%", icon: ArrowUpRight, up: true },
-    { label: "Pending Withdrawals", value: "25", icon: ArrowDownRight, up: false },
+    { label: "Total Balance", value: "$0", icon: Wallet, up: true },
+    { label: "Total Users", value: "0", icon: Users, up: true },
+    { label: "Monthly Growth", value: "0%", icon: ArrowUpRight, up: true },
+    { label: "Pending Withdrawals", value: "0", icon: ArrowDownRight, up: false },
   ] : [
-    { label: "Account Balance", value: `$${mockUser.balance.toLocaleString()}`, icon: Wallet, up: true },
-    { label: "Total Earnings", value: `$${mockUser.earnings.toLocaleString()}`, icon: ArrowUpRight, up: true },
-    { label: "Total Deposits", value: `$${mockUser.deposits.toLocaleString()}`, icon: ArrowUpRight, up: true },
-    { label: "Total Withdrawals", value: `$${mockUser.withdrawals.toLocaleString()}`, icon: ArrowDownRight, up: false },
+    { label: "Account Balance", value: "$0", icon: Wallet, up: true },
+    { label: "Total Earnings", value: "$0", icon: ArrowUpRight, up: true },
+    { label: "Total Deposits", value: "$0", icon: ArrowUpRight, up: true },
+    { label: "Total Withdrawals", value: "$0", icon: ArrowDownRight, up: false },
   ];
 
   const actionButtons = user?.isAdmin ? [
@@ -209,6 +106,10 @@ const Dashboard = () => {
     { label: "Withdraw", action: "withdraw" },
     { label: "Investment Plans", action: "plans" },
   ];
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-[#0A0A0B] relative">
@@ -248,7 +149,7 @@ const Dashboard = () => {
         <header className="hidden lg:block bg-[#121214] border-b border-white/10 p-6">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-white">
-              Welcome back, {mockUser.name}
+              Welcome back, {user.name}
             </h1>
             <Button
               variant="outline"
@@ -279,8 +180,8 @@ const Dashboard = () => {
 
           <Card className="p-4 lg:p-6 bg-[#121214] border-white/10 overflow-x-auto">
             <TransactionList
-              transactions={mockTransactions}
-              onViewAll={() => handleAction("view all")}
+              transactions={transactions}
+              onViewAll={() => navigate("/history")}
             />
           </Card>
 
@@ -303,7 +204,7 @@ const Dashboard = () => {
         action={selectedAction}
         amount={amount}
         selectedPlan={selectedPlan}
-        plans={mockInvestmentPlans}
+        plans={[]}
         onClose={handleCloseDialog}
         onConfirm={handleConfirmAction}
         onAmountChange={setAmount}

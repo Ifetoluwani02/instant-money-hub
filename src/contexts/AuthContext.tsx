@@ -19,17 +19,22 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
-  // Mock user data - in a real app, this would come from your backend
-  const mockUsers = [
-    { id: 1, name: "Admin User", email: "admin@example.com", password: "admin123", isAdmin: true },
-    { id: 2, name: "Regular User", email: "user@example.com", password: "user123", isAdmin: false },
-  ];
-
   const login = (email: string, password: string) => {
-    const foundUser = mockUsers.find(u => u.email === email && u.password === password);
-    if (foundUser) {
-      const { password: _, ...userWithoutPassword } = foundUser;
-      setUser(userWithoutPassword);
+    // For testing only - in production this should be replaced with real authentication
+    if (email === "admin@example.com" && password === "admin123") {
+      setUser({
+        id: 1,
+        name: "Admin User",
+        email: "admin@example.com",
+        isAdmin: true,
+      });
+    } else if (email === "user@example.com" && password === "user123") {
+      setUser({
+        id: 2,
+        name: "Regular User",
+        email: "user@example.com",
+        isAdmin: false,
+      });
     }
   };
 
