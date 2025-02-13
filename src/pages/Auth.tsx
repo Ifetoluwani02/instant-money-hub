@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +15,7 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { login, user } = useAuth();
+  const { login, signup, user } = useAuth();
 
   useEffect(() => {
     // If user is already logged in, redirect to dashboard
@@ -30,19 +29,19 @@ const Auth = () => {
     
     if (isLogin) {
       login(email, password);
-      // The navigation will be handled by the useEffect above when user state changes
     } else {
-      toast({
-        title: "Sign Up not available",
-        description: "Please use the login option",
-        variant: "destructive",
-      });
+      if (!name) {
+        toast({
+          title: "Error",
+          description: "Please enter your name",
+          variant: "destructive",
+        });
+        return;
+      }
+      signup(name, email, password);
     }
 
-    // Clear form
-    setEmail("");
-    setPassword("");
-    setName("");
+    // Form will be cleared if login/signup is successful due to navigation
   };
 
   return (
