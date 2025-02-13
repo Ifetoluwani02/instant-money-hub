@@ -3,20 +3,22 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import ActionDialog from "@/components/dashboard/ActionDialog";
-
-const mockUser = {
-  balance: 250000,
-  earnings: 15000,
-  deposits: 100000,
-  withdrawals: 5000,
-};
+import { useAuth } from "@/contexts/AuthContext";
 
 const Wallet = () => {
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
   const [selectedPlan, setSelectedPlan] = useState<number | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { user, updateUserBalance } = useAuth();
+
+  if (!user) {
+    navigate("/auth");
+    return null;
+  }
 
   const handleAction = (action: string) => {
     setSelectedAction(action);
@@ -38,7 +40,17 @@ const Wallet = () => {
       return;
     }
 
-    if (selectedAction === "withdraw" && Number(amount) > mockUser.balance) {
+    const numAmount = Number(amount);
+    if (isNaN(numAmount) || numAmount <= 0) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid amount",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (selectedAction === "withdraw" && numAmount > user.balance) {
       toast({
         title: "Error",
         description: "Insufficient funds",
@@ -47,11 +59,13 @@ const Wallet = () => {
       return;
     }
 
+    updateUserBalance(numAmount, selectedAction as 'deposit' | 'withdraw');
+    
     toast({
       title: selectedAction === "deposit" ? "Deposit Successful" : "Withdrawal Request Submitted",
       description: selectedAction === "deposit" 
-        ? `$${amount} has been added to your account`
-        : `Your withdrawal request for $${amount} is being processed`,
+        ? `$${numAmount} has been added to your account`
+        : `Your withdrawal request for $${numAmount} is being processed`,
     });
     
     handleCloseDialog();
@@ -64,11 +78,11 @@ const Wallet = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <Card className="p-6 bg-[#121214] border-white/10">
           <h2 className="text-lg font-semibold text-white mb-2">Balance</h2>
-          <p className="text-2xl font-bold text-white">${mockUser.balance.toLocaleString()}</p>
+          <p className="text-2xl font-bold text-white">${user.balance.toLocaleString()}</p>
         </Card>
         <Card className="p-6 bg-[#121214] border-white/10">
           <h2 className="text-lg font-semibold text-white mb-2">Total Earnings</h2>
-          <p className="text-2xl font-bold text-white">${mockUser.earnings.toLocaleString()}</p>
+          <p className="text-2xl font-bold text-white">${user.totalEarnings.toLocaleString()}</p>
         </Card>
       </div>
 

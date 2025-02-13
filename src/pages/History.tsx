@@ -1,14 +1,15 @@
 
-import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import TransactionList from "@/components/dashboard/TransactionList";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const History = () => {
-  const [transactions] = useState([]);
-  const { user } = useAuth();
+  const { user, transactions } = useAuth();
+  const navigate = useNavigate();
 
   if (!user) {
+    navigate("/auth");
     return null;
   }
 
