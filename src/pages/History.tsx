@@ -19,7 +19,10 @@ const History = () => {
       
       <Card className="p-4 lg:p-6 bg-[#121214] border-white/10">
         <TransactionList
-          transactions={transactions}
+          transactions={transactions.map(tx => ({
+            ...tx,
+            date: tx.created_at
+          }))}
           onViewAll={() => {}}
           showViewAll={false}
         />

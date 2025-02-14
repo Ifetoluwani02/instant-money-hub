@@ -24,7 +24,7 @@ const Profile = () => {
   
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, profile, logout } = useAuth();
 
   useEffect(() => {
     if (!user) {
@@ -42,10 +42,10 @@ const Profile = () => {
   };
 
   const handleEditProfile = () => {
-    if (!user) return;
+    if (!user || !profile) return;
     setEditForm({
-      name: user.name,
-      email: user.email,
+      name: profile.full_name || '',
+      email: user.email || '',
     });
     setIsEditDialogOpen(true);
   };
@@ -67,7 +67,7 @@ const Profile = () => {
     setIsEditDialogOpen(false);
   };
 
-  if (!user) {
+  if (!user || !profile) {
     return null;
   }
 
@@ -83,8 +83,8 @@ const Profile = () => {
                 <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-4">
                   <UserCircle className="w-16 h-16 text-primary" />
                 </div>
-                <h2 className="text-lg font-semibold text-white mb-2">{user.name}</h2>
-                <p className="text-sm text-gray-400">{user.isAdmin ? "Administrator" : "User"}</p>
+                <h2 className="text-lg font-semibold text-white mb-2">{profile.full_name || 'User'}</h2>
+                <p className="text-sm text-gray-400">{profile.is_admin ? "Administrator" : "User"}</p>
               </div>
             </Card>
           </div>
@@ -96,7 +96,7 @@ const Profile = () => {
                   <UserCircle className="w-5 h-5 text-primary" />
                   <div>
                     <h2 className="text-sm text-gray-400">Name</h2>
-                    <p className="text-white font-semibold">{user.name}</p>
+                    <p className="text-white font-semibold">{profile.full_name || 'User'}</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-4">
@@ -110,7 +110,7 @@ const Profile = () => {
                   <Shield className="w-5 h-5 text-primary" />
                   <div>
                     <h2 className="text-sm text-gray-400">Role</h2>
-                    <p className="text-white font-semibold">{user.isAdmin ? "Administrator" : "User"}</p>
+                    <p className="text-white font-semibold">{profile.is_admin ? "Administrator" : "User"}</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-4">

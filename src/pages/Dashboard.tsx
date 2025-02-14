@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -32,11 +31,10 @@ const Dashboard = () => {
   const [amount, setAmount] = useState("");
   const [selectedPlan, setSelectedPlan] = useState<number | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [transactions, setTransactions] = useState([]);
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  const { user } = useAuth();
+  const { user, profile, transactions } = useAuth();
 
   useEffect(() => {
     setIsVisible(true);
@@ -46,7 +44,7 @@ const Dashboard = () => {
   }, [user, navigate]);
 
   const handleAction = (action: string) => {
-    if (action === "manage-users" && user?.isAdmin) {
+    if (action === "manage-users" && profile?.is_admin) {
       navigate("/users");
       return;
     }
@@ -85,19 +83,19 @@ const Dashboard = () => {
     { icon: <HelpCircle className="w-5 h-5 mr-3" />, label: "Support" },
   ];
 
-  const stats = user?.isAdmin ? [
+  const stats = profile?.is_admin ? [
     { label: "Total Balance", value: "$0", icon: Wallet, up: true },
     { label: "Total Users", value: "0", icon: Users, up: true },
     { label: "Monthly Growth", value: "0%", icon: ArrowUpRight, up: true },
     { label: "Pending Withdrawals", value: "0", icon: ArrowDownRight, up: false },
   ] : [
-    { label: "Account Balance", value: "$0", icon: Wallet, up: true },
-    { label: "Total Earnings", value: "$0", icon: ArrowUpRight, up: true },
-    { label: "Total Deposits", value: "$0", icon: ArrowUpRight, up: true },
-    { label: "Total Withdrawals", value: "$0", icon: ArrowDownRight, up: false },
+    { label: "Account Balance", value: `$${profile?.balance || 0}`, icon: Wallet, up: true },
+    { label: "Total Earnings", value: `$${profile?.total_earnings || 0}`, icon: ArrowUpRight, up: true },
+    { label: "Total Deposits", value: `$${profile?.total_deposits || 0}`, icon: ArrowUpRight, up: true },
+    { label: "Total Withdrawals", value: `$${profile?.total_withdrawals || 0}`, icon: ArrowDownRight, up: false },
   ];
 
-  const actionButtons = user?.isAdmin ? [
+  const actionButtons = profile?.is_admin ? [
     { label: "Manage Users", action: "manage-users" },
     { label: "Approve Withdrawals", action: "approve-withdrawals" },
     { label: "Update Plans", action: "update-plans" },
@@ -107,7 +105,7 @@ const Dashboard = () => {
     { label: "Investment Plans", action: "plans" },
   ];
 
-  if (!user) {
+  if (!user || !profile) {
     return null;
   }
 
@@ -149,7 +147,7 @@ const Dashboard = () => {
         <header className="hidden lg:block bg-[#121214] border-b border-white/10 p-6">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-white">
-              Welcome back, {user.name}
+              Welcome back, {profile.full_name || 'User'}
             </h1>
             <Button
               variant="outline"

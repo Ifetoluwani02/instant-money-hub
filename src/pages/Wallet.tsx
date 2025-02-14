@@ -13,9 +13,9 @@ const Wallet = () => {
   const [selectedPlan, setSelectedPlan] = useState<number | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { user, updateUserBalance } = useAuth();
+  const { user, profile, updateUserBalance } = useAuth();
 
-  if (!user) {
+  if (!user || !profile) {
     navigate("/auth");
     return null;
   }
@@ -50,7 +50,7 @@ const Wallet = () => {
       return;
     }
 
-    if (selectedAction === "withdraw" && numAmount > user.balance) {
+    if (selectedAction === "withdraw" && numAmount > profile.balance) {
       toast({
         title: "Error",
         description: "Insufficient funds",
@@ -78,11 +78,11 @@ const Wallet = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <Card className="p-6 bg-[#121214] border-white/10">
           <h2 className="text-lg font-semibold text-white mb-2">Balance</h2>
-          <p className="text-2xl font-bold text-white">${user.balance.toLocaleString()}</p>
+          <p className="text-2xl font-bold text-white">${profile.balance.toLocaleString()}</p>
         </Card>
         <Card className="p-6 bg-[#121214] border-white/10">
           <h2 className="text-lg font-semibold text-white mb-2">Total Earnings</h2>
-          <p className="text-2xl font-bold text-white">${user.totalEarnings.toLocaleString()}</p>
+          <p className="text-2xl font-bold text-white">${profile.total_earnings.toLocaleString()}</p>
         </Card>
       </div>
 
