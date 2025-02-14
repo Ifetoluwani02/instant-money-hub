@@ -39,13 +39,17 @@ const Dashboard = () => {
   const { user, profile, transactions, loading } = useAuth();
 
   useEffect(() => {
+    // If not loading and no user, redirect to auth
     if (!loading && !user) {
       navigate("/auth");
-      return;
     }
-    setIsVisible(true);
-  }, [user, loading, navigate]);
+    // Only set visible if we have a user and profile
+    if (user && profile) {
+      setIsVisible(true);
+    }
+  }, [user, profile, loading, navigate]);
 
+  // Show loading spinner only for a short initial load
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0A0A0B] flex items-center justify-center">
@@ -54,7 +58,9 @@ const Dashboard = () => {
     );
   }
 
+  // Redirect if no user or profile
   if (!user || !profile) {
+    navigate("/auth");
     return null;
   }
 
@@ -238,3 +244,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
