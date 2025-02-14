@@ -10,11 +10,11 @@ import {
 import { Button } from "@/components/ui/button";
 
 interface Transaction {
-  id: number;
+  id: string;
   type: string;
   amount: number;
   status: string;
-  date: string;
+  created_at: string;
 }
 
 interface TransactionListProps {
@@ -75,7 +75,7 @@ const TransactionList = ({ transactions, onViewAll, showViewAll = true }: Transa
                   </span>
                 </TableCell>
                 <TableCell className="text-white">
-                  {new Date(tx.date).toLocaleDateString()}
+                  {new Date(tx.created_at).toLocaleDateString()}
                 </TableCell>
               </TableRow>
             ))
