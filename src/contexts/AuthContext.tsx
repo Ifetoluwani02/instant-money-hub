@@ -58,6 +58,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event, session);
       setUser(session?.user ?? null);
       if (session?.user) {
         await fetchUserProfile(session.user.id);
@@ -81,9 +82,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .single();
 
       if (error) throw error;
+      console.log("Fetched profile:", data);
       setProfile(data);
     } catch (error: any) {
       console.error('Error fetching user profile:', error.message);
+      toast({
+        title: "Error",
+        description: "Failed to fetch user profile",
+        variant: "destructive",
+      });
     }
   };
 
@@ -96,6 +103,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      console.log("Fetched transactions:", data);
       setTransactions(data);
     } catch (error: any) {
       console.error('Error fetching transactions:', error.message);
@@ -156,7 +164,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Refresh profile and transactions
       await fetchUserProfile(user.id);
       await fetchTransactions(user.id);
+
+      toast({
+        title: type === 'deposit' ? "Deposit Successful" : "Withdrawal Submitted",
+        description: type === 'deposit' 
+          ? `$${amount} has been added to your account` 
+          : `Your withdrawal request for $${amount} is being processed`,
+      });
     } catch (error: any) {
+      console.error(`Error updating balance:`, error);
       toast({
         title: "Error",
         description: error.message,
