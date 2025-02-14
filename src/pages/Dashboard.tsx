@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -12,7 +13,8 @@ import {
   MessageCircle,
   Bell,
   Menu,
-  X
+  X,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -34,14 +36,27 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  const { user, profile, transactions } = useAuth();
+  const { user, profile, transactions, loading } = useAuth();
 
   useEffect(() => {
-    setIsVisible(true);
-    if (!user) {
+    if (!loading && !user) {
       navigate("/auth");
+      return;
     }
-  }, [user, navigate]);
+    setIsVisible(true);
+  }, [user, loading, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0B] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 text-primary animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user || !profile) {
+    return null;
+  }
 
   const handleAction = (action: string) => {
     if (action === "manage-users" && profile?.is_admin) {
@@ -104,10 +119,6 @@ const Dashboard = () => {
     { label: "Withdraw", action: "withdraw" },
     { label: "Investment Plans", action: "plans" },
   ];
-
-  if (!user || !profile) {
-    return null;
-  }
 
   return (
     <div className="min-h-screen bg-[#0A0A0B] relative">
