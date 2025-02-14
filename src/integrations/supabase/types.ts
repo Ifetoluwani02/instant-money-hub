@@ -24,6 +24,248 @@ export type Database = {
         }
         Relationships: []
       }
+      investment_plans: {
+        Row: {
+          active: boolean | null
+          created_at: string
+          description: string | null
+          duration: unknown
+          id: string
+          max_amount: number | null
+          min_amount: number
+          name: string
+          roi_percentage: number
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string
+          description?: string | null
+          duration: unknown
+          id?: string
+          max_amount?: number | null
+          min_amount: number
+          name: string
+          roi_percentage: number
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string
+          description?: string | null
+          duration?: unknown
+          id?: string
+          max_amount?: number | null
+          min_amount?: number
+          name?: string
+          roi_percentage?: number
+        }
+        Relationships: []
+      }
+      kyc_documents: {
+        Row: {
+          created_at: string
+          document_type: string
+          document_url: string
+          id: string
+          status: string | null
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          document_type: string
+          document_url: string
+          id?: string
+          status?: string | null
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          document_type?: string
+          document_url?: string
+          id?: string
+          status?: string | null
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          read: boolean | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          read?: boolean | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          read?: boolean | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          balance: number | null
+          created_at: string
+          full_name: string | null
+          id: string
+          is_admin: boolean | null
+          kyc_status: string | null
+          total_deposits: number | null
+          total_earnings: number | null
+          total_withdrawals: number | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          balance?: number | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          is_admin?: boolean | null
+          kyc_status?: string | null
+          total_deposits?: number | null
+          total_earnings?: number | null
+          total_withdrawals?: number | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          balance?: number | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          is_admin?: boolean | null
+          kyc_status?: string | null
+          total_deposits?: number | null
+          total_earnings?: number | null
+          total_withdrawals?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      support_tickets: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          priority: string | null
+          status: string | null
+          subject: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          priority?: string | null
+          status?: string | null
+          subject: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          priority?: string | null
+          status?: string | null
+          subject?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          metadata: Json | null
+          payment_method: string | null
+          status: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          payment_method?: string | null
+          status?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          payment_method?: string | null
+          status?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_investments: {
+        Row: {
+          amount: number
+          created_at: string
+          end_date: string
+          id: string
+          plan_id: string
+          start_date: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          end_date: string
+          id?: string
+          plan_id: string
+          start_date?: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          end_date?: string
+          id?: string
+          plan_id?: string
+          start_date?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_investments_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "investment_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

@@ -1,181 +1,177 @@
 
-import { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import type { User } from "@supabase/supabase-js";
 
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  isAdmin: boolean;
+interface UserProfile {
+  id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  kyc_status: string;
+  is_admin: boolean;
   balance: number;
-  totalEarnings: number;
-  totalDeposits: number;
-  totalWithdrawals: number;
+  total_earnings: number;
+  total_deposits: number;
+  total_withdrawals: number;
 }
 
 interface Transaction {
-  id: number;
+  id: string;
   type: string;
   amount: number;
   status: string;
-  date: string;
+  created_at: string;
 }
 
 interface AuthContextType {
   user: User | null;
+  profile: UserProfile | null;
   transactions: Transaction[];
-  login: (email: string, password: string) => void;
-  signup: (name: string, email: string, password: string) => void;
-  logout: () => void;
-  updateUserBalance: (amount: number, type: 'deposit' | 'withdraw') => void;
+  loading: boolean;
+  logout: () => Promise<void>;
+  updateUserBalance: (amount: number, type: 'deposit' | 'withdraw') => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// This would normally be in a database
-const users: User[] = [
-  {
-    id: 1,
-    name: "Admin User",
-    email: "admin@example.com",
-    isAdmin: true,
-    balance: 1000000,
-    totalEarnings: 250000,
-    totalDeposits: 750000,
-    totalWithdrawals: 50000,
-  },
-  {
-    id: 2,
-    name: "Regular User",
-    email: "user@example.com",
-    isAdmin: false,
-    balance: 10000,
-    totalEarnings: 2500,
-    totalDeposits: 7500,
-    totalWithdrawals: 500,
-  }
-];
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(() => {
-    const savedUser = localStorage.getItem('user');
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) {
-      localStorage.setItem('user', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('user');
-    }
-  }, [user]);
-
-  const login = (email: string, password: string) => {
-    const foundUser = users.find(u => u.email === email);
-    
-    if (!foundUser) {
-      toast({
-        title: "Login Failed",
-        description: "Invalid email or password",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // In a real app, we would hash the password and compare it properly
-    if ((email === "admin@example.com" && password === "admin123") ||
-        (email === "user@example.com" && password === "user123")) {
-      setUser(foundUser);
-      toast({
-        title: "Login Successful",
-        description: "Welcome back!",
-      });
-    } else {
-      toast({
-        title: "Login Failed",
-        description: "Invalid email or password",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const signup = (name: string, email: string, password: string) => {
-    // Check if email already exists
-    if (users.some(u => u.email === email)) {
-      toast({
-        title: "Signup Failed",
-        description: "Email already exists",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Create new user
-    const newUser: User = {
-      id: users.length + 1,
-      name,
-      email,
-      isAdmin: false,
-      balance: 0,
-      totalEarnings: 0,
-      totalDeposits: 0,
-      totalWithdrawals: 0,
-    };
-
-    users.push(newUser);
-    setUser(newUser);
-    toast({
-      title: "Account Created",
-      description: "Welcome to our platform!",
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchUserProfile(session.user.id);
+        fetchTransactions(session.user.id);
+      }
     });
-  };
 
-  const logout = () => {
-    setUser(null);
-    setTransactions([]);
-    toast({
-      title: "Logged Out",
-      description: "See you soon!",
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        await fetchUserProfile(session.user.id);
+        await fetchTransactions(session.user.id);
+      } else {
+        setProfile(null);
+        setTransactions([]);
+      }
+      setLoading(false);
     });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) throw error;
+      setProfile(data);
+    } catch (error: any) {
+      console.error('Error fetching user profile:', error.message);
+    }
   };
 
-  const updateUserBalance = (amount: number, type: 'deposit' | 'withdraw') => {
-    if (!user) return;
+  const fetchTransactions = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
 
-    const newTransaction: Transaction = {
-      id: transactions.length + 1,
-      type,
-      amount,
-      status: type === 'withdraw' ? 'pending' : 'completed',
-      date: new Date().toISOString(),
-    };
+      if (error) throw error;
+      setTransactions(data);
+    } catch (error: any) {
+      console.error('Error fetching transactions:', error.message);
+    }
+  };
 
-    setTransactions(prev => [newTransaction, ...prev]);
+  const logout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      navigate('/auth');
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
 
-    if (type === 'deposit') {
-      setUser(prev => prev ? {
-        ...prev,
-        balance: prev.balance + amount,
-        totalDeposits: prev.totalDeposits + amount,
-      } : null);
-    } else if (type === 'withdraw' && user.balance >= amount) {
-      setUser(prev => prev ? {
-        ...prev,
-        balance: prev.balance - amount,
-        totalWithdrawals: prev.totalWithdrawals + amount,
-      } : null);
+  const updateUserBalance = async (amount: number, type: 'deposit' | 'withdraw') => {
+    if (!user || !profile) return;
+
+    const newBalance = type === 'deposit' 
+      ? profile.balance + amount 
+      : profile.balance - amount;
+
+    try {
+      // Update profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          balance: newBalance,
+          total_deposits: type === 'deposit' ? profile.total_deposits + amount : profile.total_deposits,
+          total_withdrawals: type === 'withdraw' ? profile.total_withdrawals + amount : profile.total_withdrawals,
+        })
+        .eq('id', user.id);
+
+      if (profileError) throw profileError;
+
+      // Create transaction record
+      const { error: transactionError } = await supabase
+        .from('transactions')
+        .insert({
+          user_id: user.id,
+          type,
+          amount,
+          status: type === 'deposit' ? 'completed' : 'pending',
+        });
+
+      if (transactionError) throw transactionError;
+
+      // Refresh profile and transactions
+      await fetchUserProfile(user.id);
+      await fetchTransactions(user.id);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
   return (
     <AuthContext.Provider value={{ 
       user, 
+      profile, 
       transactions, 
-      login, 
-      signup, 
-      logout, 
+      loading, 
+      logout,
       updateUserBalance 
     }}>
       {children}
