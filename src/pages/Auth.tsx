@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -29,6 +30,7 @@ const Auth = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     
     try {
       if (isLogin) {
@@ -70,6 +72,8 @@ const Auth = () => {
         description: error.message,
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -105,6 +109,7 @@ const Auth = () => {
                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                 className="bg-[#121214] border-white/10 text-white"
                 required={!isLogin}
+                disabled={isLoading}
               />
             </div>
           )}
@@ -118,6 +123,7 @@ const Auth = () => {
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               className="bg-[#121214] border-white/10 text-white"
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -131,11 +137,13 @@ const Auth = () => {
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 className="bg-[#121214] border-white/10 text-white"
                 required
+                disabled={isLoading}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                disabled={isLoading}
               >
                 {showPassword ? (
                   <EyeOff className="h-4 w-4" />
@@ -146,8 +154,19 @@ const Auth = () => {
             </div>
           </div>
 
-          <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
-            {isLogin ? "Sign In" : "Sign Up"}
+          <Button 
+            type="submit" 
+            className="w-full bg-primary hover:bg-primary/90"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {isLogin ? "Signing In..." : "Signing Up..."}
+              </>
+            ) : (
+              isLogin ? "Sign In" : "Sign Up"
+            )}
           </Button>
 
           <div className="text-center mt-4">
@@ -155,6 +174,7 @@ const Auth = () => {
               type="button"
               onClick={() => setIsLogin(!isLogin)}
               className="text-primary hover:underline"
+              disabled={isLoading}
             >
               {isLogin
                 ? "Don't have an account? Sign Up"

@@ -1,12 +1,16 @@
+
 import { Button } from "@/components/ui/button";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
 
   const navItems = [
     { name: "Platform", href: "#platform" },
@@ -58,22 +62,33 @@ const Navbar = () => {
                 {item.name}
               </button>
             ))}
-            <Button 
-              variant="outline" 
-              className="ml-4"
-              onClick={() => navigate("/auth")}
-            >
-              Login
-            </Button>
-            <Button 
-              className="bg-primary hover:bg-primary/90"
-              onClick={() => {
-                navigate("/auth");
-                window.scrollTo(0, 0);
-              }}
-            >
-              Sign Up
-            </Button>
+            {user ? (
+              <Button 
+                className="bg-primary hover:bg-primary/90"
+                onClick={() => navigate("/dashboard")}
+              >
+                Dashboard
+              </Button>
+            ) : (
+              <>
+                <Button 
+                  variant="outline" 
+                  className="ml-4"
+                  onClick={() => navigate("/auth")}
+                >
+                  Login
+                </Button>
+                <Button 
+                  className="bg-primary hover:bg-primary/90"
+                  onClick={() => {
+                    navigate("/auth");
+                    window.scrollTo(0, 0);
+                  }}
+                >
+                  Sign Up
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -103,26 +118,38 @@ const Navbar = () => {
               {item.name}
             </button>
           ))}
-          <div className="flex flex-col space-y-2 px-3 pt-4">
+          {user ? (
             <Button 
-              variant="outline"
+              className="w-full bg-primary hover:bg-primary/90 mt-4"
               onClick={() => {
-                navigate("/auth");
+                navigate("/dashboard");
                 setIsOpen(false);
               }}
             >
-              Login
+              Dashboard
             </Button>
-            <Button 
-              className="bg-primary hover:bg-primary/90"
-              onClick={() => {
-                navigate("/auth");
-                setIsOpen(false);
-              }}
-            >
-              Sign Up
-            </Button>
-          </div>
+          ) : (
+            <div className="flex flex-col space-y-2 px-3 pt-4">
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  navigate("/auth");
+                  setIsOpen(false);
+                }}
+              >
+                Login
+              </Button>
+              <Button 
+                className="bg-primary hover:bg-primary/90"
+                onClick={() => {
+                  navigate("/auth");
+                  setIsOpen(false);
+                }}
+              >
+                Sign Up
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </nav>

@@ -46,13 +46,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserProfile(session.user.id);
-        fetchTransactions(session.user.id);
+    const initAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          await fetchUserProfile(session.user.id);
+          await fetchTransactions(session.user.id);
+        }
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+      } finally {
+        setLoading(false);
       }
-    });
+    };
+
+    initAuth();
 
     // Listen for auth changes
     const {
@@ -60,6 +70,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session);
       setUser(session?.user ?? null);
+      
       if (session?.user) {
         await fetchUserProfile(session.user.id);
         await fetchTransactions(session.user.id);
@@ -67,11 +78,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setProfile(null);
         setTransactions([]);
       }
+      
       setLoading(false);
+      
+      // Redirect to dashboard on successful login
+      if (event === 'SIGNED_IN') {
+        navigate('/dashboard');
+      } else if (event === 'SIGNED_OUT') {
+        navigate('/auth');
+      }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const fetchUserProfile = async (userId: string) => {
     try {
@@ -112,20 +131,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
+      setLoading(true);
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
-      navigate('/auth');
+      // Reset local state
+      setUser(null);
+      setProfile(null);
+      setTransactions([]);
+      
       toast({
         title: "Logged out",
         description: "You have been successfully logged out.",
       });
+      
+      navigate('/auth');
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 

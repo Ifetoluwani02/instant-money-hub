@@ -13,13 +13,13 @@ import {
   MessageCircle,
   Bell,
   Menu,
-  X,
-  Loader2
+  X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Skeleton } from "@/components/ui/skeleton";
 import StatCard from "@/components/dashboard/StatCard";
 import TransactionList from "@/components/dashboard/TransactionList";
 import Sidebar from "@/components/dashboard/Sidebar";
@@ -36,31 +36,27 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  const { user, profile, transactions, loading } = useAuth();
+  const { user, profile, transactions, loading, logout } = useAuth();
 
   useEffect(() => {
-    // If not loading and no user, redirect to auth
+    // If auth is done loading and no user, redirect to auth
     if (!loading && !user) {
       navigate("/auth");
     }
+    
     // Only set visible if we have a user and profile
     if (user && profile) {
       setIsVisible(true);
     }
   }, [user, profile, loading, navigate]);
 
-  // Show loading spinner only for a short initial load
+  // Show skeleton loading state instead of spinner
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[#0A0A0B] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 text-primary animate-spin" />
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
-  // Redirect if no user or profile
+  // If no user or profile, don't render anything (redirect happens in useEffect)
   if (!user || !profile) {
-    navigate("/auth");
     return null;
   }
 
@@ -69,6 +65,12 @@ const Dashboard = () => {
       navigate("/users");
       return;
     }
+    
+    if (action === "logout") {
+      logout();
+      return;
+    }
+    
     setSelectedAction(action);
   };
 
@@ -151,9 +153,13 @@ const Dashboard = () => {
       </div>
 
       <Sidebar
-        items={sidebarItems}
+        items={[...sidebarItems, { icon: <X className="w-5 h-5 mr-3" />, label: "Logout" }]}
         onItemClick={(label) => {
-          handleAction(label);
+          if (label === "Logout") {
+            handleAction("logout");
+          } else {
+            handleAction(label.toLowerCase());
+          }
           if (isMobile) setIsSidebarOpen(false);
         }}
         isMobile={isMobile}
@@ -164,17 +170,25 @@ const Dashboard = () => {
         <header className="hidden lg:block bg-[#121214] border-b border-white/10 p-6">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-white">
-              Welcome back, {profile.full_name || 'User'}
+              Welcome back, {profile?.full_name || 'User'}
             </h1>
-            <Button
-              variant="outline"
-              size="icon"
-              className="relative"
-              onClick={() => handleAction("notifications")}
-            >
-              <Bell className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full" />
-            </Button>
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                size="icon"
+                className="relative"
+                onClick={() => handleAction("notifications")}
+              >
+                <Bell className="w-5 h-5" />
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full" />
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={() => handleAction("logout")}
+              >
+                Logout
+              </Button>
+            </div>
           </div>
         </header>
 
@@ -243,5 +257,44 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+// Skeleton loader component for dashboard
+const DashboardSkeleton = () => {
+  const isMobile = useIsMobile();
+  
+  return (
+    <div className="min-h-screen bg-[#0A0A0B]">
+      <div className={`transition-all duration-300 ${isMobile ? 'pl-0' : 'pl-64'}`}>
+        <div className="p-4 lg:p-6 space-y-6 mt-16 lg:mt-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-[#121214] rounded-lg p-6 border border-white/10">
+                <Skeleton className="h-6 w-24 bg-white/10 mb-4" />
+                <Skeleton className="h-8 w-16 bg-white/10" />
+              </div>
+            ))}
+          </div>
+          
+          <Card className="p-4 lg:p-6 bg-[#121214] border-white/10">
+            <Skeleton className="h-8 w-40 bg-white/10 mb-4" />
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex justify-between items-center py-2">
+                  <Skeleton className="h-6 w-32 bg-white/10" />
+                  <Skeleton className="h-6 w-24 bg-white/10" />
+                </div>
+              ))}
+            </div>
+          </Card>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-10 bg-white/10 rounded" />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
+export default Dashboard;
