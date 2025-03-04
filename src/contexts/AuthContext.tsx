@@ -45,20 +45,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    let isMounted = true;
     // Get initial session
     const initAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        setUser(session?.user ?? null);
         
-        if (session?.user) {
-          await fetchUserProfile(session.user.id);
-          await fetchTransactions(session.user.id);
+        if (isMounted) {
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            await fetchUserProfile(session.user.id);
+            await fetchTransactions(session.user.id);
+          }
         }
       } catch (error) {
         console.error("Error initializing auth:", error);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
@@ -69,27 +75,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session);
-      setUser(session?.user ?? null);
       
-      if (session?.user) {
-        await fetchUserProfile(session.user.id);
-        await fetchTransactions(session.user.id);
-      } else {
-        setProfile(null);
-        setTransactions([]);
-      }
-      
-      setLoading(false);
-      
-      // Redirect to dashboard on successful login
-      if (event === 'SIGNED_IN') {
-        navigate('/dashboard');
-      } else if (event === 'SIGNED_OUT') {
-        navigate('/auth');
+      if (isMounted) {
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          await fetchUserProfile(session.user.id);
+          await fetchTransactions(session.user.id);
+        } else {
+          setProfile(null);
+          setTransactions([]);
+        }
+        
+        setLoading(false);
+        
+        // Handle navigation
+        if (event === 'SIGNED_IN' && session) {
+          navigate('/dashboard');
+        } else if (event === 'SIGNED_OUT') {
+          navigate('/auth');
+        }
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   const fetchUserProfile = async (userId: string) => {
@@ -123,7 +135,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) throw error;
       console.log("Fetched transactions:", data);
-      setTransactions(data);
+      setTransactions(data || []);
     } catch (error: any) {
       console.error('Error fetching transactions:', error.message);
     }

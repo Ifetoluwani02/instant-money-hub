@@ -19,7 +19,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Skeleton } from "@/components/ui/skeleton";
 import StatCard from "@/components/dashboard/StatCard";
 import TransactionList from "@/components/dashboard/TransactionList";
 import Sidebar from "@/components/dashboard/Sidebar";
@@ -39,26 +38,17 @@ const Dashboard = () => {
   const { user, profile, transactions, loading, logout } = useAuth();
 
   useEffect(() => {
-    // If auth is done loading and no user, redirect to auth
+    // Check authentication immediately
     if (!loading && !user) {
       navigate("/auth");
+      return;
     }
     
-    // Only set visible if we have a user and profile
+    // Set visible once we have data
     if (user && profile) {
       setIsVisible(true);
     }
   }, [user, profile, loading, navigate]);
-
-  // Show skeleton loading state instead of spinner
-  if (loading) {
-    return <DashboardSkeleton />;
-  }
-
-  // If no user or profile, don't render anything (redirect happens in useEffect)
-  if (!user || !profile) {
-    return null;
-  }
 
   const handleAction = (action: string) => {
     if (action === "manage-users" && profile?.is_admin) {
@@ -68,6 +58,16 @@ const Dashboard = () => {
     
     if (action === "logout") {
       logout();
+      return;
+    }
+    
+    if (action === "dashboard") {
+      // Already on dashboard, do nothing
+      return;
+    }
+    
+    if (["wallet", "history", "profile", "support"].includes(action)) {
+      navigate(`/${action}`);
       return;
     }
     
@@ -97,6 +97,16 @@ const Dashboard = () => {
     
     handleCloseDialog();
   };
+
+  // If still loading, show skeleton
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
+
+  // If no user or profile after loading, redirect (handled in useEffect)
+  if (!user || !profile) {
+    return null;
+  }
 
   const sidebarItems = [
     { icon: <LayoutDashboard className="w-5 h-5 mr-3" />, label: "Dashboard" },
@@ -153,7 +163,7 @@ const Dashboard = () => {
       </div>
 
       <Sidebar
-        items={[...sidebarItems, { icon: <X className="w-5 h-5 mr-3" />, label: "Logout" }]}
+        items={sidebarItems}
         onItemClick={(label) => {
           if (label === "Logout") {
             handleAction("logout");

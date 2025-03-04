@@ -10,7 +10,7 @@ const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
 
   const navItems = [
     { name: "Platform", href: "#platform" },
@@ -26,6 +26,11 @@ const Navbar = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setIsOpen(false);
+  }, [location.pathname]);
 
   const handleNavClick = (href: string) => {
     setIsOpen(false);
@@ -62,7 +67,9 @@ const Navbar = () => {
                 {item.name}
               </button>
             ))}
-            {user ? (
+            {loading ? (
+              <div className="h-10 w-24 bg-gray-200 animate-pulse rounded"></div>
+            ) : user ? (
               <Button 
                 className="bg-primary hover:bg-primary/90"
                 onClick={() => navigate("/dashboard")}
@@ -118,7 +125,9 @@ const Navbar = () => {
               {item.name}
             </button>
           ))}
-          {user ? (
+          {loading ? (
+            <div className="h-10 bg-gray-200 animate-pulse rounded mx-3 mt-4"></div>
+          ) : user ? (
             <Button 
               className="w-full bg-primary hover:bg-primary/90 mt-4"
               onClick={() => {
