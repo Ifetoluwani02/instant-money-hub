@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -35,20 +36,27 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  const { user, profile, transactions, loading, logout } = useAuth();
+  const { user, profile, transactions, loading, updateUserBalance } = useAuth();
 
-  console.log("Dashboard state:", { user, profile, loading, transactions: transactions?.length });
+  console.log("Dashboard rendering with:", { 
+    user: !!user, 
+    profile: !!profile, 
+    loading, 
+    transactionsCount: transactions?.length || 0,
+    isAuthenticated: !!user && !!profile
+  });
 
   useEffect(() => {
-    if (!loading && !user) {
-      console.log("User not authenticated, redirecting to auth");
-      navigate("/auth", { replace: true });
-      return;
-    }
-    
-    if (user && profile) {
-      console.log("User and profile available, showing dashboard");
-      setIsVisible(true);
+    // Check authentication status after loading is complete
+    if (!loading) {
+      if (!user) {
+        console.log("No user found, redirecting to auth page");
+        navigate("/auth", { replace: true });
+        return;
+      } else if (user && profile) {
+        console.log("User authenticated, showing dashboard content");
+        setIsVisible(true);
+      }
     }
   }, [user, profile, loading, navigate]);
 
@@ -81,7 +89,7 @@ const Dashboard = () => {
     setSelectedPlan(null);
   };
 
-  const handleConfirmAction = () => {
+  const handleConfirmAction = async () => {
     if (!amount && ["deposit", "withdraw", "plans"].includes(selectedAction || "")) {
       toast({
         title: "Error",
@@ -91,21 +99,49 @@ const Dashboard = () => {
       return;
     }
 
-    toast({
-      title: "Action Submitted",
-      description: "Your request has been submitted and is being processed",
-    });
-    
-    handleCloseDialog();
+    try {
+      // For deposit and withdraw actions, use the updateUserBalance function
+      if (selectedAction === "deposit" || selectedAction === "withdraw") {
+        const numAmount = parseFloat(amount);
+        if (isNaN(numAmount) || numAmount <= 0) {
+          toast({
+            title: "Invalid Amount",
+            description: "Please enter a valid positive number",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        await updateUserBalance(numAmount, selectedAction as 'deposit' | 'withdraw');
+      } else {
+        // For other actions show a generic toast
+        toast({
+          title: "Action Submitted",
+          description: "Your request has been submitted and is being processed",
+        });
+      }
+      
+      handleCloseDialog();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "An error occurred",
+        variant: "destructive",
+      });
+    }
   };
 
+  // Extract logout from useAuth
+  const { logout } = useAuth();
+
   if (loading) {
-    console.log("Still loading dashboard data...");
+    console.log("Dashboard is loading...");
     return <DashboardSkeleton />;
   }
 
+  // If we're not loading, and there's no user, we should redirect (handled in useEffect)
   if (!user || !profile) {
-    console.log("No user or profile found after loading");
+    console.log("No user or profile available, showing skeleton while redirecting");
     return <DashboardSkeleton />;
   }
 

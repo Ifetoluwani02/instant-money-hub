@@ -14,7 +14,7 @@ const Auth = () => {
   const initialMode = searchParams.get('mode') === 'signup' ? false : true;
   
   const [isLogin, setIsLogin] = useState(initialMode);
-  const [showPassword, setShowPassword] = useState(true); // Default to showing password
+  const [showPassword, setShowPassword] = useState(false); // Default to hiding password for security
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -27,7 +27,8 @@ const Auth = () => {
 
   useEffect(() => {
     if (user) {
-      navigate("/dashboard");
+      console.log("User already authenticated, redirecting to dashboard");
+      navigate("/dashboard", { replace: true });
     }
   }, [user, navigate]);
 
@@ -37,6 +38,7 @@ const Auth = () => {
     
     try {
       if (isLogin) {
+        console.log("Attempting to sign in:", formData.email);
         const { error } = await supabase.auth.signInWithPassword({
           email: formData.email,
           password: formData.password,
@@ -52,6 +54,7 @@ const Auth = () => {
         // Use replace instead of push to avoid back-button issues
         navigate("/dashboard", { replace: true });
       } else {
+        console.log("Attempting to sign up:", formData.email);
         const { error } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
@@ -132,7 +135,7 @@ const Auth = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-white">Password (Visible)</Label>
+            <Label htmlFor="password" className="text-white">Password</Label>
             <div className="relative">
               <Input
                 id="password"
