@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -15,7 +16,8 @@ const Hero = () => {
   const handleGetStarted = async () => {
     setLoading(true);
     await new Promise((resolve) => setTimeout(resolve, 500));
-    navigate("/auth");
+    // Navigate to auth page with signup mode pre-selected
+    navigate("/auth?mode=signup");
     setLoading(false);
   };
 
