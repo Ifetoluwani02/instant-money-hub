@@ -49,20 +49,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Get initial session
     const initAuth = async () => {
       try {
+        console.log("Initializing auth...");
         const { data: { session } } = await supabase.auth.getSession();
         
         if (isMounted) {
+          console.log("Session found:", !!session);
           setUser(session?.user ?? null);
           
           if (session?.user) {
             await fetchUserProfile(session.user.id);
             await fetchTransactions(session.user.id);
+          } else {
+            console.log("No session found");
           }
         }
       } catch (error) {
         console.error("Error initializing auth:", error);
       } finally {
         if (isMounted) {
+          console.log("Auth initialization completed");
           setLoading(false);
         }
       }
@@ -91,9 +96,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         // Handle navigation
         if (event === 'SIGNED_IN' && session) {
-          navigate('/dashboard');
+          navigate('/dashboard', { replace: true });
         } else if (event === 'SIGNED_OUT') {
-          navigate('/auth');
+          navigate('/auth', { replace: true });
         }
       }
     });
@@ -106,6 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchUserProfile = async (userId: string) => {
     try {
+      console.log("Fetching user profile...");
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -127,6 +133,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchTransactions = async (userId: string) => {
     try {
+      console.log("Fetching transactions...");
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
@@ -134,7 +141,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      console.log("Fetched transactions:", data);
+      console.log("Fetched transactions:", data?.length || 0);
       setTransactions(data || []);
     } catch (error: any) {
       console.error('Error fetching transactions:', error.message);

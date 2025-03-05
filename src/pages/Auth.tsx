@@ -46,7 +46,8 @@ const Auth = () => {
           description: "You have successfully logged in.",
         });
         
-        navigate("/dashboard");
+        // Use replace instead of push to avoid back-button issues
+        navigate("/dashboard", { replace: true });
       } else {
         const { error } = await supabase.auth.signUp({
           email: formData.email,

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -38,15 +37,17 @@ const Dashboard = () => {
   const isMobile = useIsMobile();
   const { user, profile, transactions, loading, logout } = useAuth();
 
+  console.log("Dashboard state:", { user, profile, loading, transactions: transactions?.length });
+
   useEffect(() => {
-    // Check authentication immediately
     if (!loading && !user) {
-      navigate("/auth");
+      console.log("User not authenticated, redirecting to auth");
+      navigate("/auth", { replace: true });
       return;
     }
     
-    // Set visible once we have data
     if (user && profile) {
+      console.log("User and profile available, showing dashboard");
       setIsVisible(true);
     }
   }, [user, profile, loading, navigate]);
@@ -63,7 +64,6 @@ const Dashboard = () => {
     }
     
     if (action === "dashboard") {
-      // Already on dashboard, do nothing
       return;
     }
     
@@ -99,14 +99,14 @@ const Dashboard = () => {
     handleCloseDialog();
   };
 
-  // If still loading, show skeleton
   if (loading) {
+    console.log("Still loading dashboard data...");
     return <DashboardSkeleton />;
   }
 
-  // If no user or profile after loading, redirect (handled in useEffect)
   if (!user || !profile) {
-    return null;
+    console.log("No user or profile found after loading");
+    return <DashboardSkeleton />;
   }
 
   const sidebarItems = [
@@ -268,7 +268,6 @@ const Dashboard = () => {
   );
 };
 
-// Skeleton loader component for dashboard
 const DashboardSkeleton = () => {
   const isMobile = useIsMobile();
   
