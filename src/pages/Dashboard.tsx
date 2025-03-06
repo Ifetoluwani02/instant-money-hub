@@ -1,17 +1,6 @@
 
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { 
-  Wallet, 
-  CircleDollarSign, 
-  ArrowUpRight, 
-  ArrowDownRight,
-  Home,
-  History,
-  Users,
-  Settings,
-  HelpCircle
-} from "lucide-react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import StatsGrid from "@/components/dashboard/StatsGrid";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
@@ -22,53 +11,15 @@ import ChatButton from "@/components/dashboard/ChatButton";
 import ChatPanel from "@/components/dashboard/ChatPanel";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useMobile } from "@/hooks/use-mobile";
 
 const Dashboard = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const { user, profile, loading } = useAuth();
   const { toast } = useToast();
-  const isMobile = useIsMobile();
+  const { isMobile } = useMobile();
   const location = useLocation();
-  
-  // Handle action button clicks
-  const handleActionClick = (action: string) => {
-    switch (action) {
-      case "deposit":
-        toast({
-          title: "Deposit",
-          description: "Please contact support to make a deposit",
-        });
-        toggleChat();
-        break;
-      case "withdraw":
-        toast({
-          title: "Withdraw",
-          description: "Please contact support to request a withdrawal",
-        });
-        toggleChat();
-        break;
-      case "transfer":
-        toast({
-          title: "Transfer",
-          description: "Transfer feature coming soon",
-        });
-        break;
-      case "notifications":
-        toast({
-          title: "Notifications",
-          description: "You have no new notifications",
-        });
-        break;
-      case "logout":
-        // Handle logout
-        window.location.href = "/auth";
-        break;
-      default:
-        break;
-    }
-  };
   
   // Check if we should open chat from navigation state
   useEffect(() => {
@@ -86,51 +37,6 @@ const Dashboard = () => {
   const toggleChat = () => {
     setIsChatOpen(!isChatOpen);
   };
-
-  // Define sidebar items
-  const sidebarItems = [
-    { icon: <Home className="w-5 h-5 mr-3" />, label: "Dashboard" },
-    { icon: <Wallet className="w-5 h-5 mr-3" />, label: "Wallet" },
-    { icon: <History className="w-5 h-5 mr-3" />, label: "History" },
-    { icon: <Users className="w-5 h-5 mr-3" />, label: "Users" },
-    { icon: <Settings className="w-5 h-5 mr-3" />, label: "Settings" },
-    { icon: <HelpCircle className="w-5 h-5 mr-3" />, label: "Support" },
-  ];
-
-  // Define action buttons
-  const actionButtons = [
-    { label: "Make a Deposit", action: "deposit" },
-    { label: "Withdraw Funds", action: "withdraw" },
-    { label: "Transfer Money", action: "transfer" },
-  ];
-
-  // Define stats with icons
-  const stats = [
-    { 
-      label: "Current Balance", 
-      value: profile?.balance ? `$${profile.balance.toFixed(2)}` : "$0.00", 
-      icon: CircleDollarSign, 
-      up: true 
-    },
-    { 
-      label: "Total Earnings", 
-      value: profile?.total_earnings ? `$${profile.total_earnings.toFixed(2)}` : "$0.00", 
-      icon: ArrowUpRight, 
-      up: true 
-    },
-    { 
-      label: "Total Deposits", 
-      value: profile?.total_deposits ? `$${profile.total_deposits.toFixed(2)}` : "$0.00", 
-      icon: ArrowUpRight, 
-      up: true 
-    },
-    { 
-      label: "Total Withdrawals", 
-      value: profile?.total_withdrawals ? `$${profile.total_withdrawals.toFixed(2)}` : "$0.00", 
-      icon: ArrowDownRight, 
-      up: false 
-    },
-  ];
 
   // Show loading state
   if (loading) {
@@ -156,45 +62,34 @@ const Dashboard = () => {
   return (
     <div className="flex min-h-screen bg-[#0A0A0B] text-white">
       {/* Sidebar for desktop */}
-      {!isMobile && <Sidebar 
-        items={sidebarItems} 
-        onItemClick={handleActionClick}
-      />}
+      {!isMobile && <Sidebar />}
 
       {/* Mobile menu overlay */}
-      <MobileOverlay 
-        isVisible={isMobileMenuOpen} 
-        onClose={toggleMobileMenu} 
-      />
+      <MobileOverlay isOpen={isMobileMenuOpen} toggleMobileMenu={toggleMobileMenu} />
 
       {/* Main content area */}
       <div className="flex-1">
         {/* Mobile header */}
         {isMobile && (
           <DashboardMobileHeader 
-            isSidebarOpen={isMobileMenuOpen}
-            toggleSidebar={toggleMobileMenu}
-            onActionClick={handleActionClick}
+            toggleMobileMenu={toggleMobileMenu} 
+            isMobileMenuOpen={isMobileMenuOpen} 
           />
         )}
 
         {/* Desktop header */}
-        {!isMobile && <DashboardHeader 
-          onActionClick={handleActionClick}
-          userName={user?.email ? user.email.split('@')[0] : "User"}
-        />}
+        {!isMobile && <DashboardHeader />}
 
         {/* Main dashboard content */}
         <main className="p-4 md:p-8">
           <StatsGrid 
-            stats={stats}
-            isVisible={true}
+            balance={profile.balance} 
+            earnings={profile.total_earnings} 
+            deposits={profile.total_deposits} 
+            withdrawals={profile.total_withdrawals} 
           />
           
-          <ActionButtons 
-            buttons={actionButtons}
-            onActionClick={handleActionClick}
-          />
+          <ActionButtons />
         </main>
       </div>
 

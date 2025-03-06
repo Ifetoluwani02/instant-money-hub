@@ -4,11 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-interface HeroProps {
-  userName?: string;
-}
-
-const Hero = ({ userName }: HeroProps) => {
+const Hero = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -25,24 +21,6 @@ const Hero = ({ userName }: HeroProps) => {
     setLoading(false);
   };
 
-  const getPersonalizedGreeting = () => {
-    if (userName) {
-      return (
-        <>
-          <span className="block mb-2">Welcome back, {userName}!</span>
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80">Invest in Your Financial Future</span>
-        </>
-      );
-    }
-    
-    return (
-      <>
-        <span className="block mb-2">Invest in Your</span>
-        <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80">Financial Future</span>
-      </>
-    );
-  };
-
   return (
     <div className="relative bg-gradient-to-br from-white via-gray-50 to-gray-100 pt-24 pb-16 sm:pt-32 lg:overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -54,7 +32,8 @@ const Hero = ({ userName }: HeroProps) => {
           >
             <div className="mt-10 lg:mt-0">
               <h1 className="text-4xl font-bold tracking-tight text-secondary sm:text-5xl lg:text-6xl">
-                {getPersonalizedGreeting()}
+                <span className="block mb-2">Invest in Your</span>
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80">Financial Future</span>
               </h1>
               <p className="mt-6 text-lg sm:text-xl text-gray-600 leading-relaxed">
                 Access global markets with our comprehensive investment platform.
