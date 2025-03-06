@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -22,15 +23,19 @@ interface Transaction {
   amount: number;
   status: string;
   created_at: string;
+  user_id: string;
+  user_name?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
   transactions: Transaction[];
+  allTransactions: Transaction[];
   loading: boolean;
   logout: () => Promise<void>;
   updateUserBalance: (amount: number, type: 'deposit' | 'withdraw') => Promise<void>;
+  approveTransaction: (transactionId: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -39,6 +44,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -59,10 +65,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (session?.user) {
             await fetchUserProfile(session.user.id);
             await fetchTransactions(session.user.id);
+            
+            // If user is admin, fetch all transactions
+            const profileData = await fetchUserProfile(session.user.id);
+            if (profileData?.is_admin) {
+              await fetchAllTransactions();
+            }
           } else {
             console.log("No session found");
             setProfile(null);
             setTransactions([]);
+            setAllTransactions([]);
           }
         }
       } catch (error) {
@@ -88,11 +101,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          await fetchUserProfile(session.user.id);
+          const profileData = await fetchUserProfile(session.user.id);
           await fetchTransactions(session.user.id);
+          
+          // If user is admin, fetch all transactions
+          if (profileData?.is_admin) {
+            await fetchAllTransactions();
+          }
         } else {
           setProfile(null);
           setTransactions([]);
+          setAllTransactions([]);
         }
         
         setLoading(false);
@@ -163,6 +182,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const fetchAllTransactions = async () => {
+    try {
+      console.log("Fetching all transactions for admin");
+      const { data: transactionsData, error: transactionsError } = await supabase
+        .from('transactions')
+        .select('*, profiles(full_name)')
+        .order('created_at', { ascending: false });
+
+      if (transactionsError) {
+        console.error('Error fetching all transactions:', transactionsError.message);
+        throw transactionsError;
+      }
+
+      // Format the data to include user_name
+      const formattedTransactions = transactionsData.map(tx => ({
+        ...tx,
+        user_name: tx.profiles?.full_name || 'Unknown User'
+      }));
+      
+      console.log("Fetched all transactions:", formattedTransactions.length || 0);
+      setAllTransactions(formattedTransactions);
+      return formattedTransactions;
+    } catch (error: any) {
+      console.error('Error fetching all transactions:', error.message);
+      return [];
+    }
+  };
+
   const logout = async () => {
     try {
       setLoading(true);
@@ -173,6 +220,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
       setProfile(null);
       setTransactions([]);
+      setAllTransactions([]);
       
       toast({
         title: "Logged out",
@@ -194,47 +242,135 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const updateUserBalance = async (amount: number, type: 'deposit' | 'withdraw') => {
     if (!user || !profile) return;
 
-    const newBalance = type === 'deposit' 
-      ? profile.balance + amount 
-      : profile.balance - amount;
-
     try {
-      // Update profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          balance: newBalance,
-          total_deposits: type === 'deposit' ? profile.total_deposits + amount : profile.total_deposits,
-          total_withdrawals: type === 'withdraw' ? profile.total_withdrawals + amount : profile.total_withdrawals,
-        })
-        .eq('id', user.id);
-
-      if (profileError) throw profileError;
-
-      // Create transaction record
-      const { error: transactionError } = await supabase
+      // Create transaction record with pending status
+      const { error: transactionError, data: transactionData } = await supabase
         .from('transactions')
         .insert({
           user_id: user.id,
           type,
           amount,
-          status: type === 'deposit' ? 'completed' : 'pending',
-        });
+          status: 'pending',
+        })
+        .select();
 
       if (transactionError) throw transactionError;
 
-      // Refresh profile and transactions
-      await fetchUserProfile(user.id);
+      // Refresh transactions
       await fetchTransactions(user.id);
+      
+      // If admin, refresh all transactions
+      if (profile.is_admin) {
+        await fetchAllTransactions();
+      }
 
       toast({
-        title: type === 'deposit' ? "Deposit Successful" : "Withdrawal Submitted",
-        description: type === 'deposit' 
-          ? `$${amount} has been added to your account` 
-          : `Your withdrawal request for $${amount} is being processed`,
+        title: type === 'deposit' ? "Deposit Request Submitted" : "Withdrawal Request Submitted",
+        description: `Your ${type} request for $${amount} has been submitted and is pending approval.`,
       });
     } catch (error: any) {
-      console.error(`Error updating balance:`, error);
+      console.error(`Error creating ${type} request:`, error);
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const approveTransaction = async (transactionId: string) => {
+    if (!user || !profile || !profile.is_admin) {
+      toast({
+        title: "Error",
+        description: "Only administrators can approve transactions",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Get transaction details
+      const { data: transactionData, error: fetchError } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('id', transactionId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Get user profile
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', transactionData.user_id)
+        .single();
+
+      if (userError) throw userError;
+
+      // Calculate new balance
+      const newBalance = transactionData.type === 'deposit' 
+        ? userData.balance + transactionData.amount 
+        : userData.balance - transactionData.amount;
+
+      // Ensure sufficient balance for withdrawals
+      if (transactionData.type === 'withdraw' && newBalance < 0) {
+        toast({
+          title: "Error",
+          description: "User has insufficient balance for this withdrawal",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Update user profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          balance: newBalance,
+          total_deposits: transactionData.type === 'deposit' 
+            ? userData.total_deposits + transactionData.amount 
+            : userData.total_deposits,
+          total_withdrawals: transactionData.type === 'withdraw' 
+            ? userData.total_withdrawals + transactionData.amount 
+            : userData.total_withdrawals,
+        })
+        .eq('id', transactionData.user_id);
+
+      if (profileError) throw profileError;
+
+      // Update transaction status
+      const { error: updateError } = await supabase
+        .from('transactions')
+        .update({
+          status: 'completed',
+        })
+        .eq('id', transactionId);
+
+      if (updateError) throw updateError;
+
+      // Create notification for the user
+      const { error: notificationError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: transactionData.user_id,
+          title: transactionData.type === 'deposit' ? 'Deposit Approved' : 'Withdrawal Approved',
+          message: `Your ${transactionData.type} request for $${transactionData.amount} has been approved.`,
+          type: transactionData.type,
+        });
+
+      if (notificationError) {
+        console.error('Error creating notification:', notificationError);
+      }
+
+      // Refresh transactions
+      await fetchAllTransactions();
+
+      toast({
+        title: "Transaction Approved",
+        description: `The ${transactionData.type} for $${transactionData.amount} has been approved.`,
+      });
+    } catch (error: any) {
+      console.error('Error approving transaction:', error);
       toast({
         title: "Error",
         description: error.message,
@@ -248,9 +384,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       user, 
       profile, 
       transactions, 
+      allTransactions,
       loading, 
       logout,
-      updateUserBalance 
+      updateUserBalance,
+      approveTransaction
     }}>
       {children}
     </AuthContext.Provider>
