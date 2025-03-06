@@ -1,293 +1,101 @@
 
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { 
-  LayoutDashboard, 
-  Users, 
-  ArrowUpRight, 
-  ArrowDownRight,
-  Wallet,
-  History,
-  UserCircle,
-  HelpCircle,
-  MessageCircle,
-} from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useAuth } from "@/contexts/AuthContext";
-
-// Import dashboard components
-import TransactionList from "@/components/dashboard/TransactionList";
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import Sidebar from "@/components/dashboard/Sidebar";
-import ActionDialog from "@/components/dashboard/ActionDialog";
 import StatsGrid from "@/components/dashboard/StatsGrid";
-import ActionButtons from "@/components/dashboard/ActionButtons";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import DashboardMobileHeader from "@/components/dashboard/DashboardMobileHeader";
-import ChatButton from "@/components/dashboard/ChatButton";
 import MobileOverlay from "@/components/dashboard/MobileOverlay";
+import ActionButtons from "@/components/dashboard/ActionButtons";
+import ChatButton from "@/components/dashboard/ChatButton";
+import ChatPanel from "@/components/dashboard/ChatPanel";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { useMobile } from "@/hooks/use-mobile";
 
 const Dashboard = () => {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [selectedAction, setSelectedAction] = useState<string | null>(null);
-  const [amount, setAmount] = useState("");
-  const [selectedPlan, setSelectedPlan] = useState<number | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const navigate = useNavigate();
+  const { user, profile, loading } = useAuth();
   const { toast } = useToast();
-  const isMobile = useIsMobile();
-  const { user, profile, transactions, loading, logout, updateUserBalance } = useAuth();
-
-  console.log("Dashboard rendering with:", { 
-    user: !!user, 
-    profile: !!profile, 
-    loading, 
-    profileData: profile,
-    transactionsCount: transactions?.length || 0,
-    isAuthenticated: !!user && !!profile
-  });
-
-  useEffect(() => {
-    // Check authentication status after loading is complete
-    if (!loading) {
-      if (!user) {
-        console.log("No user found, redirecting to auth page");
-        navigate("/auth", { replace: true });
-        return;
-      } else if (user) {
-        console.log("User authenticated, showing dashboard content");
-        // Small delay to ensure animations work smoothly
-        setTimeout(() => setIsVisible(true), 100);
-      }
-    }
-  }, [user, loading, navigate]);
-
-  const handleAction = (action: string) => {
-    if (action === "manage-users" && profile?.is_admin) {
-      navigate("/users");
-      return;
-    }
-    
-    if (action === "logout") {
-      logout();
-      return;
-    }
-    
-    if (action === "dashboard") {
-      return;
-    }
-    
-    if (["wallet", "history", "profile", "support"].includes(action)) {
-      navigate(`/${action}`);
-      return;
-    }
-    
-    setSelectedAction(action);
-  };
-
-  const handleCloseDialog = () => {
-    setSelectedAction(null);
-    setAmount("");
-    setSelectedPlan(null);
-  };
-
-  const handleConfirmAction = async () => {
-    if (!amount && ["deposit", "withdraw", "plans"].includes(selectedAction || "")) {
-      toast({
-        title: "Error",
-        description: "Please enter an amount",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      // For deposit and withdraw actions, use the updateUserBalance function
-      if (selectedAction === "deposit" || selectedAction === "withdraw") {
-        const numAmount = parseFloat(amount);
-        if (isNaN(numAmount) || numAmount <= 0) {
-          toast({
-            title: "Invalid Amount",
-            description: "Please enter a valid positive number",
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        await updateUserBalance(numAmount, selectedAction as 'deposit' | 'withdraw');
-      } else {
-        // For other actions show a generic toast
-        toast({
-          title: "Action Submitted",
-          description: "Your request has been submitted and is being processed",
-        });
-      }
-      
-      handleCloseDialog();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "An error occurred",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
-  const toggleChat = () => setIsChatOpen(!isChatOpen);
-
-  if (loading) {
-    console.log("Dashboard is loading...");
-    return <DashboardSkeleton />;
-  }
-
-  // If we're not loading, and there's no user, we should redirect (handled in useEffect)
-  if (!user) {
-    console.log("No user available, showing skeleton while redirecting");
-    return <DashboardSkeleton />;
-  }
-
-  // If we have a user but no profile, show loading state
-  if (!profile) {
-    console.log("No profile available, showing skeleton");
-    return <DashboardSkeleton />;
-  }
-
-  const sidebarItems = [
-    { icon: <LayoutDashboard className="w-5 h-5 mr-3" />, label: "Dashboard" },
-    { icon: <Wallet className="w-5 h-5 mr-3" />, label: "Wallet" },
-    { icon: <History className="w-5 h-5 mr-3" />, label: "History" },
-    { icon: <UserCircle className="w-5 h-5 mr-3" />, label: "Profile" },
-    { icon: <HelpCircle className="w-5 h-5 mr-3" />, label: "Support" },
-  ];
-
-  const stats = profile?.is_admin ? [
-    { label: "Total Balance", value: "$0", icon: Wallet, up: true },
-    { label: "Total Users", value: "0", icon: Users, up: true },
-    { label: "Monthly Growth", value: "0%", icon: ArrowUpRight, up: true },
-    { label: "Pending Withdrawals", value: "0", icon: ArrowDownRight, up: false },
-  ] : [
-    { label: "Account Balance", value: `$${profile?.balance || 0}`, icon: Wallet, up: true },
-    { label: "Total Earnings", value: `$${profile?.total_earnings || 0}`, icon: ArrowUpRight, up: true },
-    { label: "Total Deposits", value: `$${profile?.total_deposits || 0}`, icon: ArrowUpRight, up: true },
-    { label: "Total Withdrawals", value: `$${profile?.total_withdrawals || 0}`, icon: ArrowDownRight, up: false },
-  ];
-
-  const actionButtons = profile?.is_admin ? [
-    { label: "Manage Users", action: "manage-users" },
-    { label: "Approve Withdrawals", action: "approve-withdrawals" },
-    { label: "Update Plans", action: "update-plans" },
-  ] : [
-    { label: "Deposit Funds", action: "deposit" },
-    { label: "Withdraw", action: "withdraw" },
-    { label: "Investment Plans", action: "plans" },
-  ];
-
-  return (
-    <div className="min-h-screen bg-[#0A0A0B] relative">
-      <DashboardMobileHeader
-        isSidebarOpen={isSidebarOpen}
-        toggleSidebar={toggleSidebar}
-        onActionClick={handleAction}
-      />
-
-      <Sidebar
-        items={sidebarItems}
-        onItemClick={(label) => {
-          if (label === "Logout") {
-            handleAction("logout");
-          } else {
-            handleAction(label.toLowerCase());
-          }
-          if (isMobile) setIsSidebarOpen(false);
-        }}
-        isMobile={isMobile}
-        isOpen={isSidebarOpen}
-      />
-
-      <main className={`transition-all duration-300 ${isMobile ? 'pl-0' : 'pl-64'}`}>
-        <DashboardHeader 
-          onActionClick={handleAction}
-          userName={profile?.full_name}
-        />
-
-        <div className="p-4 lg:p-6 space-y-6 mt-16 lg:mt-0">
-          <StatsGrid stats={stats} isVisible={isVisible} />
-
-          <Card className="p-4 lg:p-6 bg-[#121214] border-white/10 overflow-x-auto">
-            <TransactionList
-              transactions={transactions}
-              onViewAll={() => navigate("/history")}
-            />
-          </Card>
-
-          <ActionButtons 
-            buttons={actionButtons}
-            onActionClick={handleAction}
-          />
-        </div>
-      </main>
-
-      <ActionDialog
-        isOpen={!!selectedAction}
-        action={selectedAction}
-        amount={amount}
-        selectedPlan={selectedPlan}
-        plans={[]}
-        onClose={handleCloseDialog}
-        onConfirm={handleConfirmAction}
-        onAmountChange={setAmount}
-        onPlanSelect={setSelectedPlan}
-      />
-
-      <ChatButton isOpen={isChatOpen} toggleChat={toggleChat} />
-
-      <MobileOverlay
-        isVisible={isMobile && isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-      />
-    </div>
-  );
-};
-
-const DashboardSkeleton = () => {
-  const isMobile = useIsMobile();
+  const { isMobile } = useMobile();
+  const location = useLocation();
   
-  return (
-    <div className="min-h-screen bg-[#0A0A0B]">
-      <div className={`transition-all duration-300 ${isMobile ? 'pl-0' : 'pl-64'}`}>
-        <div className="p-4 lg:p-6 space-y-6 mt-16 lg:mt-0">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="bg-[#121214] rounded-lg p-6 border border-white/10">
-                <Skeleton className="h-6 w-24 bg-white/10 mb-4" />
-                <Skeleton className="h-8 w-16 bg-white/10" />
-              </div>
-            ))}
-          </div>
-          
-          <Card className="p-4 lg:p-6 bg-[#121214] border-white/10">
-            <Skeleton className="h-8 w-40 bg-white/10 mb-4" />
-            <div className="space-y-2">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex justify-between items-center py-2">
-                  <Skeleton className="h-6 w-32 bg-white/10" />
-                  <Skeleton className="h-6 w-24 bg-white/10" />
-                </div>
-              ))}
-            </div>
-          </Card>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-10 bg-white/10 rounded" />
-            ))}
-          </div>
+  // Check if we should open chat from navigation state
+  useEffect(() => {
+    if (location.state?.openChat) {
+      setIsChatOpen(true);
+      // Clear the state to avoid reopening on page refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const toggleChat = () => {
+    setIsChatOpen(!isChatOpen);
+  };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="flex min-h-screen bg-[#0A0A0B] text-white justify-center items-center">
+        <div className="animate-pulse">Loading...</div>
+      </div>
+    );
+  }
+
+  // Show error if no profile data
+  if (!profile) {
+    return (
+      <div className="flex min-h-screen bg-[#0A0A0B] text-white justify-center items-center p-4">
+        <div className="text-center">
+          <h1 className="text-xl font-bold mb-2">Profile not found</h1>
+          <p className="text-gray-400">There was an error loading your profile data.</p>
         </div>
       </div>
+    );
+  }
+
+  return (
+    <div className="flex min-h-screen bg-[#0A0A0B] text-white">
+      {/* Sidebar for desktop */}
+      {!isMobile && <Sidebar />}
+
+      {/* Mobile menu overlay */}
+      <MobileOverlay isOpen={isMobileMenuOpen} toggleMobileMenu={toggleMobileMenu} />
+
+      {/* Main content area */}
+      <div className="flex-1">
+        {/* Mobile header */}
+        {isMobile && (
+          <DashboardMobileHeader 
+            toggleMobileMenu={toggleMobileMenu} 
+            isMobileMenuOpen={isMobileMenuOpen} 
+          />
+        )}
+
+        {/* Desktop header */}
+        {!isMobile && <DashboardHeader />}
+
+        {/* Main dashboard content */}
+        <main className="p-4 md:p-8">
+          <StatsGrid 
+            balance={profile.balance} 
+            earnings={profile.total_earnings} 
+            deposits={profile.total_deposits} 
+            withdrawals={profile.total_withdrawals} 
+          />
+          
+          <ActionButtons />
+        </main>
+      </div>
+
+      {/* Chat button and panel */}
+      <ChatButton isOpen={isChatOpen} toggleChat={toggleChat} />
+      <ChatPanel isOpen={isChatOpen} />
     </div>
   );
 };
