@@ -185,9 +185,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const fetchAllTransactions = async () => {
     try {
       console.log("Fetching all transactions for admin");
+      
+      // First fetch all transactions
       const { data: transactionsData, error: transactionsError } = await supabase
         .from('transactions')
-        .select('*, profiles(full_name)')
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (transactionsError) {
@@ -195,10 +197,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw transactionsError;
       }
 
-      // Format the data to include user_name
+      // Create a set of unique user IDs from the transactions
+      const userIds = new Set(transactionsData.map(tx => tx.user_id));
+      
+      // Fetch profiles for those users
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', Array.from(userIds));
+        
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError.message);
+        throw profilesError;
+      }
+      
+      // Create a map of user IDs to names for quick lookup
+      const userNameMap = new Map();
+      profilesData.forEach(profile => {
+        userNameMap.set(profile.id, profile.full_name || 'Unknown User');
+      });
+      
+      // Format the transactions with user names
       const formattedTransactions = transactionsData.map(tx => ({
         ...tx,
-        user_name: tx.profiles?.full_name || 'Unknown User'
+        user_name: userNameMap.get(tx.user_id) || 'Unknown User'
       }));
       
       console.log("Fetched all transactions:", formattedTransactions.length || 0);
