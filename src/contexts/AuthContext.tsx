@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -50,6 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const initAuth = async () => {
       try {
         console.log("Initializing auth...");
+        setLoading(true);
         const { data: { session } } = await supabase.auth.getSession();
         
         if (isMounted) {
@@ -61,6 +61,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             await fetchTransactions(session.user.id);
           } else {
             console.log("No session found");
+            setProfile(null);
+            setTransactions([]);
           }
         }
       } catch (error) {
@@ -82,6 +84,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.log("Auth state changed:", event, session);
       
       if (isMounted) {
+        setLoading(true);
         setUser(session?.user ?? null);
         
         if (session?.user) {
@@ -111,16 +114,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchUserProfile = async (userId: string) => {
     try {
-      console.log("Fetching user profile...");
+      console.log("Fetching user profile for ID:", userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching user profile:', error.message);
+        throw error;
+      }
+      
       console.log("Fetched profile:", data);
       setProfile(data);
+      return data;
     } catch (error: any) {
       console.error('Error fetching user profile:', error.message);
       toast({
@@ -128,23 +136,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: "Failed to fetch user profile",
         variant: "destructive",
       });
+      return null;
     }
   };
 
   const fetchTransactions = async (userId: string) => {
     try {
-      console.log("Fetching transactions...");
+      console.log("Fetching transactions for user ID:", userId);
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching transactions:', error.message);
+        throw error;
+      }
+      
       console.log("Fetched transactions:", data?.length || 0);
       setTransactions(data || []);
+      return data || [];
     } catch (error: any) {
       console.error('Error fetching transactions:', error.message);
+      return [];
     }
   };
 

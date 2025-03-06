@@ -42,6 +42,7 @@ const Dashboard = () => {
     user: !!user, 
     profile: !!profile, 
     loading, 
+    profileData: profile,
     transactionsCount: transactions?.length || 0,
     isAuthenticated: !!user && !!profile
   });
@@ -53,12 +54,13 @@ const Dashboard = () => {
         console.log("No user found, redirecting to auth page");
         navigate("/auth", { replace: true });
         return;
-      } else if (user && profile) {
+      } else if (user) {
         console.log("User authenticated, showing dashboard content");
-        setIsVisible(true);
+        // Small delay to ensure animations work smoothly
+        setTimeout(() => setIsVisible(true), 100);
       }
     }
-  }, [user, profile, loading, navigate]);
+  }, [user, loading, navigate]);
 
   const handleAction = (action: string) => {
     if (action === "manage-users" && profile?.is_admin) {
@@ -140,8 +142,14 @@ const Dashboard = () => {
   }
 
   // If we're not loading, and there's no user, we should redirect (handled in useEffect)
-  if (!user || !profile) {
-    console.log("No user or profile available, showing skeleton while redirecting");
+  if (!user) {
+    console.log("No user available, showing skeleton while redirecting");
+    return <DashboardSkeleton />;
+  }
+
+  // If we have a user but no profile, show loading state
+  if (!profile) {
+    console.log("No profile available, showing skeleton");
     return <DashboardSkeleton />;
   }
 

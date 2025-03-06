@@ -14,7 +14,7 @@ const Auth = () => {
   const initialMode = searchParams.get('mode') === 'signup' ? false : true;
   
   const [isLogin, setIsLogin] = useState(initialMode);
-  const [showPassword, setShowPassword] = useState(false); // Default to hiding password for security
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -55,6 +55,11 @@ const Auth = () => {
         navigate("/dashboard", { replace: true });
       } else {
         console.log("Attempting to sign up:", formData.email);
+        
+        if (!formData.fullName.trim()) {
+          throw new Error("Full name is required");
+        }
+        
         const { error } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
