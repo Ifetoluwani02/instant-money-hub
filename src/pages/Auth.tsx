@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,7 +39,7 @@ const Auth = () => {
     try {
       if (isLogin) {
         console.log("Attempting to sign in:", formData.email);
-        const { error } = await supabase.auth.signInWithPassword({
+        const { error, data } = await supabase.auth.signInWithPassword({
           email: formData.email,
           password: formData.password,
         });
@@ -51,7 +51,8 @@ const Auth = () => {
           description: "You have successfully logged in.",
         });
         
-        // Use replace instead of push to avoid back-button issues
+        // Force navigation after successful login
+        console.log("Login successful, navigating to dashboard");
         navigate("/dashboard", { replace: true });
       } else {
         console.log("Attempting to sign up:", formData.email);
@@ -172,10 +173,7 @@ const Auth = () => {
             disabled={isLoading}
           >
             {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {isLogin ? "Signing In..." : "Signing Up..."}
-              </>
+              isLogin ? "Signing In..." : "Signing Up..."
             ) : (
               isLogin ? "Sign In" : "Sign Up"
             )}

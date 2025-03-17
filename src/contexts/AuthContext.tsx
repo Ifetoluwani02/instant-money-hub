@@ -1,6 +1,5 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -48,6 +47,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     let isMounted = true;
@@ -71,11 +71,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (profileData?.is_admin) {
               await fetchAllTransactions();
             }
+            
+            // Only navigate if we're on the auth page
+            if (location.pathname === '/auth') {
+              console.log("User is authenticated and on auth page, redirecting to dashboard");
+              navigate('/dashboard', { replace: true });
+            }
           } else {
             console.log("No session found");
             setProfile(null);
             setTransactions([]);
             setAllTransactions([]);
+            
+            // If we're on a protected route and there's no session, redirect to auth
+            if (location.pathname.match(/^\/dashboard|^\/wallet|^\/history|^\/profile|^\/support|^\/users/)) {
+              console.log("Unauthenticated user on protected route, redirecting to auth");
+              navigate('/auth', { replace: true });
+            }
           }
         }
       } catch (error) {
@@ -118,8 +130,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         // Handle navigation
         if (event === 'SIGNED_IN' && session) {
+          console.log("User signed in, redirecting to dashboard");
           navigate('/dashboard', { replace: true });
         } else if (event === 'SIGNED_OUT') {
+          console.log("User signed out, redirecting to auth");
           navigate('/auth', { replace: true });
         }
       }
@@ -129,7 +143,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, location.pathname]);
 
   const fetchUserProfile = async (userId: string) => {
     try {
@@ -249,7 +263,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: "You have been successfully logged out.",
       });
       
-      navigate('/auth');
+      navigate('/auth', { replace: true });
     } catch (error: any) {
       toast({
         title: "Error",

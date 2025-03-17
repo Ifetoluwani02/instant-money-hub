@@ -27,7 +27,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 const Dashboard = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, logout } = useAuth();
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const location = useLocation();
@@ -61,9 +61,8 @@ const Dashboard = () => {
           description: "You have no new notifications",
         });
         break;
-      case "logout":
-        // Handle logout
-        window.location.href = "/auth";
+      case "Logout":
+        logout();
         break;
       default:
         break;
@@ -132,11 +131,11 @@ const Dashboard = () => {
     },
   ];
 
-  // Show loading state
+  // Show loading state - simplified to just a brief message instead of spinner
   if (loading) {
     return (
       <div className="flex min-h-screen bg-[#0A0A0B] text-white justify-center items-center">
-        <div className="animate-pulse">Loading...</div>
+        <div>Loading dashboard...</div>
       </div>
     );
   }
@@ -181,7 +180,7 @@ const Dashboard = () => {
         {/* Desktop header */}
         {!isMobile && <DashboardHeader 
           onActionClick={handleActionClick}
-          userName={user?.email ? user.email.split('@')[0] : "User"}
+          userName={profile?.full_name || (user?.email ? user.email.split('@')[0] : "User")}
         />}
 
         {/* Main dashboard content */}
