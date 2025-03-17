@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import Insights from "./pages/Insights";
@@ -18,22 +19,24 @@ import NotFound from "./pages/NotFound";
 
 const App = () => (
   <TooltipProvider>
-    <Toaster />
-    <Sonner />
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/about" element={<About />} />
-      <Route path="/insights" element={<Insights />} />
-      <Route path="/partners" element={<Partners />} />
-      <Route path="/auth" element={<Auth />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/users" element={<Users />} />
-      <Route path="/wallet" element={<Wallet />} />
-      <Route path="/history" element={<History />} />
-      <Route path="/profile" element={<Profile />} />
-      <Route path="/support" element={<Support />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <AuthProvider>
+      <Toaster />
+      <Sonner />
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/insights" element={<Insights />} />
+        <Route path="/partners" element={<Partners />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/users" element={<Users />} />
+        <Route path="/wallet" element={<Wallet />} />
+        <Route path="/history" element={<History />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/support" element={<Support />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </AuthProvider>
   </TooltipProvider>
 );
 

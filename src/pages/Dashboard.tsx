@@ -131,11 +131,11 @@ const Dashboard = () => {
     },
   ];
 
-  // Show loading state - simplified to just a brief message instead of spinner
+  // Show simplified loading state instead of spinner
   if (loading) {
     return (
       <div className="flex min-h-screen bg-[#0A0A0B] text-white justify-center items-center">
-        <div>Loading dashboard...</div>
+        <div className="text-lg">Loading your dashboard...</div>
       </div>
     );
   }
