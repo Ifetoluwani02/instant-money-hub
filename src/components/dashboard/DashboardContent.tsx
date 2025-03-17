@@ -1,5 +1,5 @@
 
-import { UserProfile } from "@/integrations/supabase/types";
+import { UserProfile } from "@/types/user";
 import DashboardStats from "@/components/dashboard/DashboardStats";
 import ActionButtons from "@/components/dashboard/ActionButtons";
 

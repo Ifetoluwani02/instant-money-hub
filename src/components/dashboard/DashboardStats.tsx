@@ -2,7 +2,7 @@
 import { ReactNode } from "react";
 import { CircleDollarSign, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import StatsGrid from "@/components/dashboard/StatsGrid";
-import { UserProfile } from "@/integrations/supabase/types";
+import { UserProfile } from "@/types/user";
 
 interface DashboardStatsProps {
   profile: UserProfile | null;

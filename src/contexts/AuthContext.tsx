@@ -3,28 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
-
-interface UserProfile {
-  id: string;
-  full_name: string | null;
-  avatar_url: string | null;
-  kyc_status: string;
-  is_admin: boolean;
-  balance: number;
-  total_earnings: number;
-  total_deposits: number;
-  total_withdrawals: number;
-}
-
-interface Transaction {
-  id: string;
-  type: string;
-  amount: number;
-  status: string;
-  created_at: string;
-  user_id: string;
-  user_name?: string;
-}
+import { UserProfile, Transaction } from "@/types/user";
 
 interface AuthContextType {
   user: User | null;
@@ -51,7 +30,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     let isMounted = true;
-    // Get initial session
     const initAuth = async () => {
       try {
         console.log("Initializing auth...");
@@ -66,13 +44,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             await fetchUserProfile(session.user.id);
             await fetchTransactions(session.user.id);
             
-            // If user is admin, fetch all transactions
             const profileData = await fetchUserProfile(session.user.id);
             if (profileData?.is_admin) {
               await fetchAllTransactions();
             }
             
-            // Only navigate if we're on the auth page
             if (location.pathname === '/auth') {
               console.log("User is authenticated and on auth page, redirecting to dashboard");
               navigate('/dashboard', { replace: true });
@@ -83,7 +59,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setTransactions([]);
             setAllTransactions([]);
             
-            // If we're on a protected route and there's no session, redirect to auth
             if (location.pathname.match(/^\/dashboard|^\/wallet|^\/history|^\/profile|^\/support|^\/users/)) {
               console.log("Unauthenticated user on protected route, redirecting to auth");
               navigate('/auth', { replace: true });
@@ -102,7 +77,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     initAuth();
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -116,7 +90,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const profileData = await fetchUserProfile(session.user.id);
           await fetchTransactions(session.user.id);
           
-          // If user is admin, fetch all transactions
           if (profileData?.is_admin) {
             await fetchAllTransactions();
           }
@@ -128,7 +101,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         setLoading(false);
         
-        // Handle navigation
         if (event === 'SIGNED_IN' && session) {
           console.log("User signed in, redirecting to dashboard");
           navigate('/dashboard', { replace: true });
@@ -200,7 +172,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       console.log("Fetching all transactions for admin");
       
-      // First fetch all transactions
       const { data: transactionsData, error: transactionsError } = await supabase
         .from('transactions')
         .select('*')
@@ -211,10 +182,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw transactionsError;
       }
 
-      // Create a set of unique user IDs from the transactions
       const userIds = new Set(transactionsData.map(tx => tx.user_id));
       
-      // Fetch profiles for those users
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, full_name')
@@ -225,13 +194,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw profilesError;
       }
       
-      // Create a map of user IDs to names for quick lookup
       const userNameMap = new Map();
       profilesData.forEach(profile => {
         userNameMap.set(profile.id, profile.full_name || 'Unknown User');
       });
       
-      // Format the transactions with user names
       const formattedTransactions = transactionsData.map(tx => ({
         ...tx,
         user_name: userNameMap.get(tx.user_id) || 'Unknown User'
@@ -252,7 +219,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
-      // Reset local state
       setUser(null);
       setProfile(null);
       setTransactions([]);
@@ -279,7 +245,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!user || !profile) return;
 
     try {
-      // Create transaction record with pending status
       const { error: transactionError, data: transactionData } = await supabase
         .from('transactions')
         .insert({
@@ -292,10 +257,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (transactionError) throw transactionError;
 
-      // Refresh transactions
       await fetchTransactions(user.id);
       
-      // If admin, refresh all transactions
       if (profile.is_admin) {
         await fetchAllTransactions();
       }
@@ -325,7 +288,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      // Get transaction details
       const { data: transactionData, error: fetchError } = await supabase
         .from('transactions')
         .select('*')
@@ -334,7 +296,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (fetchError) throw fetchError;
 
-      // Get user profile
       const { data: userData, error: userError } = await supabase
         .from('profiles')
         .select('*')
@@ -343,12 +304,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (userError) throw userError;
 
-      // Calculate new balance
       const newBalance = transactionData.type === 'deposit' 
         ? userData.balance + transactionData.amount 
         : userData.balance - transactionData.amount;
 
-      // Ensure sufficient balance for withdrawals
       if (transactionData.type === 'withdraw' && newBalance < 0) {
         toast({
           title: "Error",
@@ -358,7 +317,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      // Update user profile
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -374,7 +332,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (profileError) throw profileError;
 
-      // Update transaction status
       const { error: updateError } = await supabase
         .from('transactions')
         .update({
@@ -384,7 +341,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (updateError) throw updateError;
 
-      // Create notification for the user
       const { error: notificationError } = await supabase
         .from('notifications')
         .insert({
@@ -398,7 +354,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.error('Error creating notification:', notificationError);
       }
 
-      // Refresh transactions
       await fetchAllTransactions();
 
       toast({
